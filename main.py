@@ -5,12 +5,14 @@ from disnake.ext import commands
 import view.console_out
 import random
 from typing import Optional
+from dotenv import load_dotenv
+import os
 
-f = open("TOKEN.txt", "r")
+load_dotenv()
 
-TOKEN = f.read()
 PREFIX = '/'
 intents = disnake.Intents().all()
+TOKEN = os.getenv('TOKEN')
 
 bot = commands.Bot(command_prefix=PREFIX, help_command=None, intents=intents, test_guilds=[1175855563444330637])
 
