@@ -6,7 +6,7 @@ import view.console_out as out
 import random
 from typing import Optional
 
-TOKEN = 'MTEyNTg2NzAzODY0OTM2MDQ5Ng.GXernt.MFniPMzNvVQSa_Rpu3BlPqn260X91fpA0FjSfI'
+TOKEN = 'MTEyNTg2NzAzODY0OTM2MDQ5Ng.GlojRX.Td3wXmjbbGUCCBbF2D4dL6Y6KuttEFQ7adjOx4'
 PREFIX = '/'
 intents = disnake.Intents().all()
 
