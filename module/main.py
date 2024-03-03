@@ -2,7 +2,7 @@ import disnake
 from disnake.ext import commands
 # import controller.commands
 # import controller.events
-import view.console_out as out
+import view.console_out
 import random
 from typing import Optional
 
@@ -67,13 +67,13 @@ async def dropdowntest(ctx):
 
 @bot.event
 async def on_ready():
-    out.log("Bot started, ready to work!")
+    view.console_out.log("Bot started, ready to work!")
 
 
 @bot.slash_command()
 async def hello(inter):
     await inter.send("world")
-    out.log(f"{inter.author.mention} used /hello")
+    view.console_out.log(f"{inter.author.mention} used /hello")
 
 
 @bot.command()
@@ -85,7 +85,7 @@ async def embedtest(ctx):
         color=0xfffff
     )
     await ctx.send(embed=embed, view=view)
-    out.log(f"{ctx.author.mention} used /embedtest")
+    view.console_out.log(f"{ctx.author.mention} used /embedtest")
     await view.wait()
 
     if view.value is None:
@@ -98,16 +98,16 @@ async def embedtest(ctx):
 
 @bot.slash_command()
 async def ping(inter):
-    out.log(f"{inter.author} used /test")
-    out.log(f"{inter.author} testing log message")
-    out.warning(f"{inter.author} testing warning message")
-    out.error(f"{inter.author} testing error message")
+    view.console_out.log(f"{inter.author} used /test")
+    view.console_out.log(f"{inter.author} testing log message")
+    view.console_out.warning(f"{inter.author} testing warning message")
+    view.console_out.error(f"{inter.author} testing error message")
     await inter.send("Ping successful! Check your console for more info")
 
 
 @bot.slash_command()
 async def roll(inter, *, dice):
-    out.log(f"{inter.author} used /roll " + dice)
+    view.console_out.log(f"{inter.author} used /roll " + dice)
     try:
         inputs = dice.split()
         outputs = []
@@ -120,7 +120,7 @@ async def roll(inter, *, dice):
                 rollsum += result
             else:
                 await inter.send(f"Указывайте числа больше нуля! Мне придётся пропустить '{inputs[i]}'")
-                out.warning(f"/roll was used with incorrect parameters: negative number")
+                view.console_out.warning(f"/roll was used with incorrect parameters: negative number")
 
         if len(inputs) > 1:
             await inter.send(f"{inter.author.mention}, выпало {'+'.join(outputs)}=**{rollsum}**")
@@ -128,7 +128,9 @@ async def roll(inter, *, dice):
             await inter.send(f"{inter.author.mention}, выпало **{outputs[0]}**")
     except ValueError:
         await inter.send("Используйте только числа!")
-        out.warning(f"/roll was used with incorrect parameters: string")
+        view.console_out.warning(f"/roll was used with incorrect parameters: string")
 
 
-bot.run(TOKEN)
+
+if __name__ == '__main__':
+    bot.run(TOKEN)
