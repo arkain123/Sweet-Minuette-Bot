@@ -41,7 +41,7 @@ class Dropdown(disnake.ui.StringSelect):
             disnake.SelectOption(label="Sushi", description="Тают во рту!", emoji="🍣"),
             disnake.SelectOption(label="Pizza", description="Тянущийся сыр!", emoji="🍕")
         ]
-        
+
         super().__init__(
             placeholder="MENU",
             min_values=1,
