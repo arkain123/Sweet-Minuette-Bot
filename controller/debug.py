@@ -33,7 +33,7 @@ class Debug(commands.Cog):
         usage="/load <extension>",
         description="Подключает модуль"
     )
-    @commands.is_owner()
+    # @commands.has_permissions(kick_members=True)
     async def load(self, ctx, extension):
         important(f"{ctx.author} used /load {extension}")
         try:
@@ -46,11 +46,11 @@ class Debug(commands.Cog):
             await ctx.send(f"Не удалось загрузить модуль {extension} ({disnake.ext.commands.errors.ExtensionNotFound})")
 
     @commands.command(
-        name="un",
+        name="unload",
         usage="/unload <extension>",
         description="Отключает модуль"
     )
-    @commands.is_owner()
+    # @commands.has_permissions(kick_members=True)
     async def unload(self, ctx, extension):
         important(f"{ctx.author} used /unload {extension}")
         try:
@@ -67,7 +67,7 @@ class Debug(commands.Cog):
         usage="/reload <extension>",
         description="Перезагружает модуль"
     )
-    @commands.is_owner()
+    # @commands.has_permissions(kick_members=True)
     async def reload(self, ctx, extension):
         important(f"{ctx.author} used /reload {extension}")
         try:

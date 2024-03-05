@@ -17,19 +17,20 @@ def connect(module):
         return 0
 
 
-nummodules = 5
+nummodules = 6
 load_dotenv()
 PREFIX = '/'
 intents = disnake.Intents().all()
 TOKEN = os.getenv('TOKEN')
 connections = 0
 
-bot = commands.Bot(command_prefix=PREFIX, help_command=None, intents=intents, test_guilds=[1175855563444330637])
+bot = commands.Bot(command_prefix=PREFIX, help_command=None, intents=intents, test_guilds=[1175855563444330637, 715142906658422796])
 
 connections += connect("controller.botcommands")
 connections += connect("controller.debug")
 # connections += connect("controller.events")
 connections += connect("controller.testing")
+connections += connect("controller.mafia")
 connections += classes.connected()
 connections += console_out.connected()
 
