@@ -46,6 +46,7 @@ class Mafia(commands.Cog):
             self.regplayers.append(Player(inter.author))
             self.regplayers[len(self.regplayers)-1].role = "SPECTATOR"
             self.regplayers[len(self.regplayers)-1].id = inter.author.id
+            await inter.guild.get_member(self.regplayers[len(self.regplayers)-1].id).add_roles(inter.guild.roles[1])
             log(f"{self.regplayers[len(self.regplayers)-1].id},\t {self.regplayers[len(self.regplayers)-1].name}")
             log(f"{inter.author} used /join")
             log(f"Assigned role SPECTATOR to {inter.author}")
@@ -68,7 +69,7 @@ class Mafia(commands.Cog):
                 if self.regplayers[i].name == inter.author:
                     await inter.send("Вы покинули игру Мафия")
                     log(f"{inter.author} used /leave")
-                    # self.regplayers.name = ""
+                    await inter.guild.get_member(self.regplayers[i].id).remove_roles(inter.guild.roles[1])
                     self.regplayers.pop(i)
                     return 0
             await inter.send("Вам нечего покидать!")
@@ -76,6 +77,30 @@ class Mafia(commands.Cog):
         else:
             await inter.send("Нет запущенных игр!")
             log(f"{inter.author} used /leave, but game wasn't started")
+
+    @commands.slash_command(
+        name="spectate",
+        usage="/spectate",
+        description="Наблюдать за игрой Мафия"
+    )
+    async def spectate(self, inter):
+        if self.LEVEL != "NOTHING":
+            for i in range(len(self.regplayers)):
+                if self.regplayers[i].name == inter.author:
+                    await inter.send("Вы уже наблюдаете за игрой! Используйте `/leave` для выхода.")
+                    log(f"{inter.author} used /spectate, but already spectating")
+                    return 0
+            await inter.send("Вы наблюдаете за игрой!")
+            self.regplayers.append(Player(inter.author))
+            self.regplayers[len(self.regplayers) - 1].role = "SPECTATOR"
+            self.regplayers[len(self.regplayers) - 1].id = inter.author.id
+            await inter.guild.get_member(self.regplayers[len(self.regplayers) - 1].id).add_roles(inter.guild.roles[1])
+            log(f"{self.regplayers[len(self.regplayers) - 1].id},\t {self.regplayers[len(self.regplayers) - 1].name}")
+            log(f"{inter.author} used /spectate")
+            log(f"Assigned role SPECTATOR to {inter.author}")
+        else:
+            await inter.send("Нет запущенных игр!")
+            log(f"{inter.author} used /spectate, but game wasn't started")
 
     @commands.slash_command(
         name="prestmafia",
@@ -95,8 +120,14 @@ class Mafia(commands.Cog):
             await ctx.guild.create_text_channel("general", category=ctx.guild.categories[1], overwrites={
                 ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
                 ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=True)
+                # TODO: restrict chatting for spectators in general chat and create logic for spectating chat
                 # ctx.guild.get_member(502833677269467146): disnake.PermissionOverwrite(view_channel=True)
             }, position=0)
+            await ctx.guild.create_text_channel("spectating", category=ctx.guild.categories[1], overwrites={
+                ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
+                ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=True)
+                # ctx.guild.get_member(502833677269467146): disnake.PermissionOverwrite(view_channel=True)
+            }, position=1)
 
 
             await ctx.send("Игра создана!")
@@ -112,11 +143,14 @@ class Mafia(commands.Cog):
             self.PHASE = "DAY"
 
         for i in range(len(self.regplayers)):
+            self.aliveplayers[i] = self.regplayers[i]
             await ctx.guild.create_text_channel(str(self.regplayers[i].name), category=ctx.guild.categories[1], overwrites={
                 ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
                 ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=False),
                 ctx.guild.get_member(self.regplayers[i].id): disnake.PermissionOverwrite(view_channel=True)
             }, position=1)
+
+        await ctx.send("Started!")
 
 
     @commands.command(
@@ -131,12 +165,15 @@ class Mafia(commands.Cog):
 
             if ctx.guild.roles[1].name == "mfplayer":
                 await ctx.guild.roles[1].delete()
-
+            channelsToDelete = []
             for i in range(len(ctx.guild.channels)):
                 if ctx.guild.channels[i].category == ctx.guild.categories[1]:
-                    await ctx.guild.channels[i].delete()
-
+                    channelsToDelete.append(ctx.guild.channels[i])
+            for i in range(len(channelsToDelete)):
+                await channelsToDelete[i].delete()
             await ctx.guild.categories[1].delete()
+
+        await ctx.send("Game ended")
 
     @commands.command(
         name="status",
@@ -144,7 +181,7 @@ class Mafia(commands.Cog):
         description="Информация по игре Мафия"
     )
     async def status(self, ctx):
-        await ctx.send(f"LEVEL={self.LEVEL}\nPHASE={self.PHASE}\nREGPLAYERS={self.regplayers.count()}\nALIVEPLAYERS={self.regplayers.count()}")
+        await ctx.send(f"LEVEL={self.LEVEL}\nPHASE={self.PHASE}\nREGPLAYERS={len(self.regplayers)}\nALIVEPLAYERS={len(self.aliveplayers)}")
 
 
 def setup(bot):
