@@ -47,6 +47,7 @@ class Mafia(commands.Cog):
             self.regplayers[len(self.regplayers)-1].role = "SPECTATOR"
             self.regplayers[len(self.regplayers)-1].id = inter.author.id
             await inter.guild.get_member(self.regplayers[len(self.regplayers)-1].id).add_roles(inter.guild.roles[1])
+            await inter.guild.get_member(self.regplayers[len(self.regplayers)-1].id).add_roles(inter.guild.roles[2])
             log(f"{self.regplayers[len(self.regplayers)-1].id},\t {self.regplayers[len(self.regplayers)-1].name}")
             log(f"{inter.author} used /join")
             log(f"Assigned role SPECTATOR to {inter.author}")
@@ -110,26 +111,44 @@ class Mafia(commands.Cog):
     async def prestmafia(self, ctx):
         if self.LEVEL == "NOTHING":
             self.regplayers = []
+            self.aliveplayers = []
             self.LEVEL = "PRESTART"
             self.PHASE = "DAY"
+            await ctx.guild.create_role(name="GM")
+            await ctx.guild.create_role(name="spectator")
             await ctx.guild.create_role(name="mfplayer")
+            await ctx.author.add_roles(ctx.guild.roles[3])
             await ctx.guild.create_category("MAFIA GENERAL", overwrites={
                 ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
-                ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=True)
+                ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=True),
+                ctx.guild.roles[2]: disnake.PermissionOverwrite(send_messages=False)
             }, position=0)
             await ctx.guild.create_text_channel("general", category=ctx.guild.categories[1], overwrites={
                 ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
-                ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=True)
-                # TODO: restrict chatting for spectators in general chat and create logic for spectating chat
-                # ctx.guild.get_member(502833677269467146): disnake.PermissionOverwrite(view_channel=True)
+                ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=True),
+                ctx.guild.roles[2]: disnake.PermissionOverwrite(view_channel=True, send_messages=False, add_reactions=False)
             }, position=0)
             await ctx.guild.create_text_channel("spectating", category=ctx.guild.categories[1], overwrites={
                 ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
-                ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=True)
-                # ctx.guild.get_member(502833677269467146): disnake.PermissionOverwrite(view_channel=True)
+                ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=False),
+                ctx.guild.roles[2]: disnake.PermissionOverwrite(send_messages=True, view_channel=True)
             }, position=1)
-
-
+            await ctx.guild.create_text_channel("commands", category=ctx.guild.categories[1], overwrites={
+                ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
+                ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=False),
+                ctx.guild.roles[2]: disnake.PermissionOverwrite(view_channel=False),
+                ctx.guild.roles[3]: disnake.PermissionOverwrite(view_channel=True)
+            }, position=2)
+            await ctx.guild.create_voice_channel("voice", category=ctx.guild.categories[1], overwrites={
+                ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
+                ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=True),
+                ctx.guild.roles[2]: disnake.PermissionOverwrite(speak=False)
+            }, position=3)
+            await ctx.guild.categories[1].channels[0].send(f"{ctx.guild.roles[1].mention}, добро пожаловать в игру. Сейчас идёт фаза регистрации. Во время этой фазы ведущий набирает игроков. Ждите начала игры! Если вы передумали участвовать в игре - напишите `/leave`")
+            await ctx.guild.categories[1].channels[0].send("Канал general предназначен для общения игроков во время дневной фазы. Этот канал видят также и наблюдатели. Мертвые игроки писать в него не могут!")
+            await ctx.guild.categories[1].channels[0].send("Канал spectating канал предназначеный для мертвых игроков и наблюдателей. В этом чате вы можете спокойно раскрывать свою роль и обсуждать игровые моменты")
+            await ctx.guild.categories[1].channels[1].send(f"{ctx.guild.roles[2].mention} Этот канал предназначен для общения мертвых игроков и наблюдателей. Старайтесь не мешать игре!")
+            await ctx.guild.categories[1].channels[2].send(f"{ctx.guild.roles[3].mention} Команды и заметки, которые вам могут пригодиться во время игры пишите сюда.")
             await ctx.send("Игра создана!")
 
     @commands.slash_command(
@@ -140,17 +159,19 @@ class Mafia(commands.Cog):
     async def stmafia(self, ctx):
         if self.LEVEL == "PRESTART":
             self.LEVEL = "START"
-            self.PHASE = "DAY"
+            self.PHASE = "NIGHT"
+            for i in range(len(self.regplayers)):
+                self.aliveplayers[i] = self.regplayers[i]
+                await ctx.guild.create_text_channel(str(self.regplayers[i].name), category=ctx.guild.categories[1], overwrites={
+                    ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
+                    ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=False),
+                    ctx.guild.get_member(self.regplayers[i].id): disnake.PermissionOverwrite(view_channel=True)
+                }, position=1)
 
-        for i in range(len(self.regplayers)):
-            self.aliveplayers[i] = self.regplayers[i]
-            await ctx.guild.create_text_channel(str(self.regplayers[i].name), category=ctx.guild.categories[1], overwrites={
-                ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
-                ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=False),
-                ctx.guild.get_member(self.regplayers[i].id): disnake.PermissionOverwrite(view_channel=True)
-            }, position=1)
+            await ctx.guild.categories[1].channels[0].send("Игра началась")
+            await ctx.send("Started!")
 
-        await ctx.send("Started!")
+
 
 
     @commands.command(
@@ -165,6 +186,10 @@ class Mafia(commands.Cog):
 
             if ctx.guild.roles[1].name == "mfplayer":
                 await ctx.guild.roles[1].delete()
+            if ctx.guild.roles[2].name == "spectator":
+                await ctx.guild.roles[2].delete()
+            if ctx.guild.roles[3].name == "GM":
+                await ctx.guild.roles[3].delete()
             channelsToDelete = []
             for i in range(len(ctx.guild.channels)):
                 if ctx.guild.channels[i].category == ctx.guild.categories[1]:
