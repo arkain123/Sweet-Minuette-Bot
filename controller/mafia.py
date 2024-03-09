@@ -386,7 +386,11 @@ class Mafia(commands.Cog):
             if (ctx.guild.roles[3] in ctx.author.roles) and (ctx.guild.roles[3].name == "GM"):
                 for i in range(len(self.aliveplayers)):
                     if self.aliveplayers[i].id == h_id:
-                        self.aliveplayers[i].state += 1
+                        if self.aliveplayers[i].id == self.HEALID:
+                            ctx.send("Игрок уже был вылечен прошлой ночью!")
+                        else:
+                            self.aliveplayers[i].state += 1
+                            self.HEALID = self.aliveplayers[i].id
             else:
                 ctx.send("Вы должны быть ведущим для исполнения данной команды!")
         else:
