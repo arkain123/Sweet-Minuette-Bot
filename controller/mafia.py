@@ -61,6 +61,7 @@ class Mafia(commands.Cog):
                     return 0
             await inter.send("Вы зарегистрировались в игре!")
             self.regplayers.append(Player(inter.author, "NONE", inter.author.id))
+            await inter.guild.categories[1].channels[0].send(f"{inter.author.name} зашел в игру")
             await inter.guild.get_member(self.regplayers[len(self.regplayers)-1].id).add_roles(inter.guild.roles[1])
             await inter.guild.get_member(self.regplayers[len(self.regplayers)-1].id).add_roles(inter.guild.roles[2])
             log(f"{self.regplayers[len(self.regplayers)-1].id},\t {self.regplayers[len(self.regplayers)-1].name}")
@@ -114,6 +115,7 @@ class Mafia(commands.Cog):
             self.regplayers[len(self.regplayers) - 1].role = "SPECTATOR"
             self.regplayers[len(self.regplayers) - 1].id = inter.author.id
             await inter.guild.get_member(self.regplayers[len(self.regplayers) - 1].id).add_roles(inter.guild.roles[1])
+            await inter.guild.categories[1].channels[0].send(f"{inter.author.name} зашел в наблюдатели")
             log(f"{self.regplayers[len(self.regplayers) - 1].id},\t {self.regplayers[len(self.regplayers) - 1].name}")
             log(f"{inter.author} used /spectate")
             log(f"Assigned role SPECTATOR to {inter.author}")
@@ -127,6 +129,7 @@ class Mafia(commands.Cog):
         description="Открыть набор на игру Мафия"
     )
     async def prestmafia(self, ctx):
+        # TODO: войс и категория не удаляются!
         log(f"{ctx.author} used /prestmafia")
         if self.LEVEL == "NOTHING":
             self.regplayers = []
@@ -151,42 +154,37 @@ class Mafia(commands.Cog):
                 ctx.guild.roles[3]: disnake.PermissionOverwrite(view_channel=True),
                 ctx.guild.roles[2]: disnake.PermissionOverwrite(view_channel=True, send_messages=False, add_reactions=False)
             }, position=0)
-            log(f"created channel {ctx.guild.channels[0].name}")
+            log(f"created channel {ctx.guild.categories[1].channels[0].name}")
             await ctx.guild.create_text_channel("spectating", category=ctx.guild.categories[1], overwrites={
                 ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
                 ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=False),
                 ctx.guild.roles[3]: disnake.PermissionOverwrite(send_messages=True, view_channel=True),
                 ctx.guild.roles[2]: disnake.PermissionOverwrite(send_messages=True, view_channel=True)
             }, position=1)
-            log(f"created channel {ctx.guild.channels[1].name}")
+            log(f"created channel {ctx.guild.categories[1].channels[1].name}")
             await ctx.guild.create_text_channel("commands", category=ctx.guild.categories[1], overwrites={
                 ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
                 ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=False),
                 ctx.guild.roles[2]: disnake.PermissionOverwrite(view_channel=False),
                 ctx.guild.roles[3]: disnake.PermissionOverwrite(view_channel=True)
             }, position=2)
-            log(f"created channel {ctx.guild.channels[2].name}")
-            await ctx.guild.create_voice_channel("voice", category=ctx.guild.categories[1], overwrites={
-                ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
-                ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=False),
-                ctx.guild.roles[3]: disnake.PermissionOverwrite(view_channel=True),
-                ctx.guild.roles[2]: disnake.PermissionOverwrite(speak=False)
-            }, position=3)
-            log(f"created channel {ctx.guild.channels[3].name}")
+            log(f"created channel {ctx.guild.categories[1].channels[2].name}")
             await ctx.guild.create_voice_channel("voice", category=ctx.guild.categories[1], overwrites={
                 ctx.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
                 ctx.guild.roles[1]: disnake.PermissionOverwrite(view_channel=True),
                 ctx.guild.roles[3]: disnake.PermissionOverwrite(view_channel=True),
                 ctx.guild.roles[2]: disnake.PermissionOverwrite(speak=False)
             }, position=4)
-            log(f"created channel {ctx.guild.channels[3].name}")
+            log(f"created channel {ctx.guild.categories[1].channels[3].name}")
             await ctx.guild.categories[1].channels[0].send(f"{ctx.guild.roles[1].mention}, добро пожаловать в игру. Сейчас идёт фаза регистрации. Во время этой фазы ведущий набирает игроков. Ждите начала игры! Если вы передумали участвовать в игре - напишите `/leave`")
             await ctx.guild.categories[1].channels[0].send("Канал general предназначен для общения игроков во время дневной фазы. Этот канал видят также и наблюдатели. Мертвые игроки писать в него не могут!")
             await ctx.guild.categories[1].channels[0].send("Канал spectating канал предназначеный для мертвых игроков и наблюдателей. В этом чате вы можете спокойно раскрывать свою роль и обсуждать игровые моменты")
             await ctx.guild.categories[1].channels[1].send(f"{ctx.guild.roles[2].mention} Этот канал предназначен для общения мертвых игроков и наблюдателей. Старайтесь не мешать игре!")
             await ctx.guild.categories[1].channels[2].send(f"{ctx.guild.roles[3].mention} Команды и заметки, которые вам могут пригодиться во время игры пишите сюда.")
-            await ctx.guild.categories[1].channels[3].send(f"Поздравляю, вам всем выпала роль мафии. В этом чате вы будете переговариваться и договариваться о том, кого убить")
-            await ctx.send("Игра создана!")
+            # await ctx.guild.categories[1].channels[4].send(f"Поздравляю, вам всем выпала роль мафии. В этом чате вы будете переговариваться и договариваться о том, кого убить")
+            await ctx.guild.categories[1].channels[2].send("Игра создана!")
+        else:
+            await ctx.send("Игра уже создана")
 
     @commands.slash_command(
         name="stmafia",
@@ -194,9 +192,12 @@ class Mafia(commands.Cog):
         description="Запустить игру Мафия"
     )
     async def stmafia(self, ctx):
+        # TODO: FIX BUG! Игроки не могут писать в чат при старте мафии (Не снялась роль спектаторов при начале игры) + сделать фазу начала "ночь"
         # TODO: remove role "spectator" from alive players
+        # TODO: FIX BUG! Игра переходит в начатое состояние, даже при нехватке игроков!
+        # TODO: FIX BUG! в лог пишется канал где мы сидим при создании персональных каналов, исправить!
         log(f"{ctx.author} used /stmafia")
-        random.shuffle(self.aliveplayers)
+        random.shuffle(self.regplayers)
         if self.LEVEL == "PRESTART":
             self.HEALID = 0
             self.LEVEL = "START"
@@ -204,6 +205,7 @@ class Mafia(commands.Cog):
             for i in range(len(self.regplayers)):
                 if self.regplayers[i].role == "NONE":
                     self.aliveplayers.append(self.regplayers[i])
+                    await ctx.guild.get_member(self.aliveplayers[i].id).remove_roles(ctx.guild.roles[2])
             if len(self.aliveplayers) < 4:
                 await ctx.send("Unable to start: Small players count")
                 log("Unable to start: Small players count!")
@@ -215,11 +217,11 @@ class Mafia(commands.Cog):
                     ctx.guild.roles[3]: disnake.PermissionOverwrite(view_channel=True),
                     ctx.guild.get_member(self.aliveplayers[i].id): disnake.PermissionOverwrite(view_channel=True)
                 }, position=4)
-                log(f"created personal channel {ctx.guild.channels[1].name} for {self.aliveplayers[i].name}")
+                log(f"created personal channel {ctx.guild.categories[1].channels[3+i].name} for {self.aliveplayers[i].name}")
 
             if len(self.aliveplayers) >= 4 & len(self.aliveplayers) <= 6:
-                self.aliveplayers[0].role = self.ROLES[1]
                 self.generate_mares()
+                self.aliveplayers[0].role = self.ROLES[1]
             elif len(self.aliveplayers) == 7:
                 self.aliveplayers[0].role = self.ROLES[1]
                 self.aliveplayers[1].role = self.ROLES[2]
@@ -244,27 +246,35 @@ class Mafia(commands.Cog):
                 self.aliveplayers[6].role = self.ROLES[4]
 
             await ctx.guild.categories[1].channels[0].send("Игра началась")
-            await ctx.send("Started!")
+            await ctx.guild.categories[1].channels[2].send("Started!")
 
             for i in range(len(self.aliveplayers)):
-                if self.aliveplayers[i].name == ctx.guild.categories[1].channels[4+i].name:
+                log(f"{self.aliveplayers[i].name} == {ctx.guild.categories[1].channels[3+i].name}")
+                if str(self.aliveplayers[i].name) == str(ctx.guild.categories[1].channels[3+i].name):
+                    log(f"{self.aliveplayers[i].name} == {ctx.guild.categories[1].channels[3+i].name}")
                     if self.aliveplayers[i].role == self.ROLES[0]:
-                        await ctx.guild.categories[1].channels[5+i].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention}, твоя роль - **Мирная кобылка**")
+                        await ctx.guild.categories[1].channels[3+i].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention}, твоя роль - **Мирная кобылка**")
+                        log(f"given {self.ROLES[0]} to {self.aliveplayers[i].name}")
                     if self.aliveplayers[i].role == self.ROLES[1]:
-                        await ctx.guild.categories[1].channels[5+i].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention}, твоя роль - **Алмазный пёс**")
+                        await ctx.guild.categories[1].channels[3+i].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention}, твоя роль - **Алмазный пёс**")
                         self.mafiaplayers.append(self.aliveplayers[i])
+                        log(f"given {self.ROLES[1]} to {self.aliveplayers[i].name}")
                     if self.aliveplayers[i].role == self.ROLES[3]:
-                        await ctx.guild.categories[1].channels[5+i].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention}, твоя роль - **Медсестра**")
+                        await ctx.guild.categories[1].channels[3+i].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention}, твоя роль - **Медсестра**")
+                        log(f"given {self.ROLES[3]} to {self.aliveplayers[i].name}")
                     if self.aliveplayers[i].role == self.ROLES[2]:
-                        await ctx.guild.categories[1].channels[5+i].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention}, твоя роль - **Шериф**")
+                        await ctx.guild.categories[1].channels[3+i].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention}, твоя роль - **Шериф**")
+                        log(f"given {self.ROLES[2]} to {self.aliveplayers[i].name}")
                     if self.aliveplayers[i].role == self.ROLES[4]:
-                        await ctx.guild.categories[1].channels[5+i].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention}, твоя роль - **Маньяк**")
+                        await ctx.guild.categories[1].channels[3+i].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention}, твоя роль - **Маньяк**")
+                        log(f"given {self.ROLES[4]} to {self.aliveplayers[i].name}")
                     if self.aliveplayers[i].role == self.ROLES[5]:
-                        await ctx.guild.categories[1].channels[5+i].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention}, твоя роль - **Помощник шерифа**")
+                        await ctx.guild.categories[1].channels[3+i].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention}, твоя роль - **Помощник шерифа**")
+                        log(f"given {self.ROLES[5]} to {self.aliveplayers[i].name}")
 
             for i in range(len(self.mafiaplayers)):
                 if len(self.aliveplayers) >= 8:
-                    ctx.guild.categories[1].channels[3].set_permissions(self.mafiaplayers[i], view_channel=True)
+                    await ctx.guild.categories[1].channels[3].set_permissions(self.mafiaplayers[i], view_channel=True)
 
     @commands.slash_command(
         name="next",
@@ -285,54 +295,52 @@ class Mafia(commands.Cog):
                     for i in range(len(self.aliveplayers)):
                         self.aliveplayers[i].days += 1
                         if self.aliveplayers[i].role == self.ROLES[0]:
-                            ctx.guild.categories[1].channels[0].send(
+                            await ctx.guild.categories[1].channels[0].send(
                                 f"{ctx.guild.get_member(self.aliveplayers[i].id).mention} - **Мирная кобылка**")
                         if self.aliveplayers[i].role == self.ROLES[1]:
-                            ctx.guild.categories[1].channels[0].send(
+                            await ctx.guild.categories[1].channels[0].send(
                                 f"{ctx.guild.get_member(self.aliveplayers[i].id).mention} - **Алмазный пёс**")
                         if self.aliveplayers[i].role == self.ROLES[3]:
-                            ctx.guild.categories[1].channels[0].send(
+                            await ctx.guild.categories[1].channels[0].send(
                                 f"{ctx.guild.get_member(self.aliveplayers[i].id).mention} - **Медсестра**")
                         if self.aliveplayers[i].role == self.ROLES[2]:
-                            ctx.guild.categories[1].channels[0].send(
+                            await ctx.guild.categories[1].channels[0].send(
                                 f"{ctx.guild.get_member(self.aliveplayers[i].id).mention} - **Шериф**")
                         if self.aliveplayers[i].role == self.ROLES[4]:
-                            ctx.guild.categories[1].channels[0].send(
+                            await ctx.guild.categories[1].channels[0].send(
                                 f"{ctx.guild.get_member(self.aliveplayers[i].id).mention} - **Маньяк**")
                         if self.aliveplayers[i].role == self.ROLES[5]:
-                            ctx.guild.categories[1].channels[0].send(
+                            await ctx.guild.categories[1].channels[0].send(
                                 f"{ctx.guild.get_member(self.aliveplayers[i].id).mention} - **Помощник шерифа**")
                     await ctx.send("Готово! Игра окончена!")
-                    ctx.guild.categories[1].channels[4].set_permissions(ctx.guild.roles[1], speak=True)
-                    ctx.guild.categories[1].channels[0].set_permissions(ctx.guild.roles[1], send_messages=True)
-                    ctx.guild.categories[1].channels[4].set_permissions(ctx.guild.roles[2], speak=True)
-                    ctx.guild.categories[1].channels[0].set_permissions(ctx.guild.roles[2], send_messages=True)
+                    await ctx.guild.categories[1].channels[3+len(self.regplayers)].set_permissions(ctx.guild.roles[1], speak=True, view_channel=True)
+                    await ctx.guild.categories[1].channels[0].set_permissions(ctx.guild.roles[1], send_messages=True, view_channel=True)
+                    await ctx.guild.categories[1].channels[0].set_permissions(ctx.guild.roles[2], send_messages=True, view_channel=True)
                     return 0
 
                 if self.PHASE == "DAY":
                     self.PHASE = "NIGHT"
-                    ctx.guild.categories[1].channels[4].set_permissions(ctx.guild.roles[1], speak=False)
-                    ctx.guild.categories[1].channels[0].set_permissions(ctx.guild.roles[1], send_messages=False)
-                    ctx.guild.categories[1].channels[0].send("**Наступает ночь...**")
+                    await ctx.guild.categories[1].channels[3+len(self.regplayers)].set_permissions(ctx.guild.roles[1], send_messages=False, view_channel=True)
+                    await ctx.guild.categories[1].channels[0].set_permissions(ctx.guild.roles[1], send_messages=False, view_channel=True)
+                    await ctx.guild.categories[1].channels[0].send("**Наступает ночь...**")
                 else:
                     self.PHASE = "DAY"
-                    ctx.guild.categories[1].channels[0].send("**Всходит солнце...**")
-                    ctx.guild.categories[1].channels[0].send("На утро не проснулся(ись):")
+                    await ctx.guild.categories[1].channels[0].send("**Всходит солнце...**")
+                    await ctx.guild.categories[1].channels[0].send("На утро не проснулся(ись):")
                     for i in range(len(self.aliveplayers)):
                         if self.aliveplayers[i].state < 0:
-                            ctx.guild.categories[1].channels[0].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention} - был убит и прожил с нами {self.aliveplayers[i].days} дней!")
-                            ctx.guild.get_member(self.aliveplayers[i].id).add_roles(ctx.guild.roles[2])
-                            if self.aliveplayers[i].role == self.ROLES[1]:
-                                ctx.guild.categories[1].channels[3].set_permissions(self.aliveplayers[i],
-                                                                                    view_channel=True,
-                                                                                    send_messages=False)
-                                for j in range(len(self.mafiaplayers)):
-                                    if self.aliveplayers[i].id == self.mafiaplayers[j].id:
-                                        self.mafiaplayers.pop(j)
+                            await ctx.guild.categories[1].channels[0].send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention} - был убит и прожил с нами {self.aliveplayers[i].days} дней!")
+                            await ctx.guild.get_member(self.aliveplayers[i].id).add_roles(ctx.guild.roles[2])
                             self.aliveplayers[i].role = "SPECTATOR"
-                            self.aliveplayers[i].pop(i)
-                    ctx.guild.categories[1].channels[4].set_permissions(ctx.guild.roles[1], speak=True)
-                    ctx.guild.categories[1].channels[0].set_permissions(ctx.guild.roles[1], send_messages=True)
+                            for j in range(len(self.mafiaplayers)):
+                                if self.aliveplayers[i].id == self.mafiaplayers[j].id:
+                                    self.mafiaplayers.pop(j)
+                            self.aliveplayers.pop(i)
+                    await ctx.guild.categories[1].channels[3 + len(self.regplayers)].set_permissions(ctx.guild.roles[1],
+                                                                                                     speak=True,
+                                                                                                     view_channel=True)
+                    await ctx.guild.categories[1].channels[0].set_permissions(ctx.guild.roles[1], send_messages=True,
+                                                                              view_channel=True)
                 await ctx.send(f"Готово! Наступает {self.PHASE}")
             else:
                 await ctx.send("У вас недостаточно прав для этого действия! Вы должны быть ведущим игры!")
@@ -348,12 +356,12 @@ class Mafia(commands.Cog):
         if self.LEVEL == "START":
             if (ctx.guild.roles[3] in ctx.author.roles) and (ctx.guild.roles[3].name == "GM"):
                 for i in range(len(self.aliveplayers)):
-                    if self.aliveplayers[i].id == k_id:
+                    if int(self.aliveplayers[i].id) == int(k_id):
                         self.aliveplayers[i].state -= 1
             else:
-                ctx.send("Вы должны быть ведущим для исполнения данной команды!")
+                await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
         else:
-            ctx.send("Нет запущенных игр!")
+            await ctx.send("Нет запущенных игр!")
 
     @commands.command(
         name="execute",
@@ -366,13 +374,13 @@ class Mafia(commands.Cog):
                 for i in range(len(self.aliveplayers)):
                     if self.aliveplayers[i].id == e_id:
                         self.aliveplayers[i].role = "SPECTATOR"
-                        ctx.guild.get_member(self.aliveplayers[i].id).add_roles(ctx.guild.roles[2])
-                        ctx.guild.categories[1].channels[0].send(f"Игрок {ctx.guild.get_member(e_id).mention} был казнён! Игрок прожил с нами {self.aliveplayers[i].days} дней!") # TODO: Добавить объявление роли при казни?
+                        await ctx.guild.get_member(self.aliveplayers[i].id).add_roles(ctx.guild.roles[2])
+                        await ctx.guild.categories[1].channels[0].send(f"Игрок {ctx.guild.get_member(e_id).mention} был казнён! Игрок прожил с нами {self.aliveplayers[i].days} дней!") # TODO: Добавить объявление роли при казни?
                         self.aliveplayers.pop(i)
             else:
-                ctx.send("Вы должны быть ведущим для исполнения данной команды!")
+                await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
         else:
-            ctx.send("Нет запущенных игр!")
+            await ctx.send("Нет запущенных игр!")
 
 
 
@@ -387,14 +395,14 @@ class Mafia(commands.Cog):
                 for i in range(len(self.aliveplayers)):
                     if self.aliveplayers[i].id == h_id:
                         if self.aliveplayers[i].id == self.HEALID:
-                            ctx.send("Игрок уже был вылечен прошлой ночью!")
+                            await ctx.send("Игрок уже был вылечен прошлой ночью!")
                         else:
                             self.aliveplayers[i].state += 1
                             self.HEALID = self.aliveplayers[i].id
             else:
-                ctx.send("Вы должны быть ведущим для исполнения данной команды!")
+                await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
         else:
-            ctx.send("Нет запущенных игр!")
+            await ctx.send("Нет запущенных игр!")
 
 
     @commands.command(
@@ -408,13 +416,13 @@ class Mafia(commands.Cog):
                 for i in range(len(self.aliveplayers)):
                     if self.aliveplayers[i].id == i_id:
                         if self.aliveplayers[i].role == self.ROLES[1] or self.aliveplayers[i].role == self.ROLES[4]:
-                            ctx.send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention} играет за сторону псов!")
+                            await ctx.send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention} играет за сторону псов!")
                         else:
-                            ctx.send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention} играет за сторону кобылок!")
+                            await ctx.send(f"{ctx.guild.get_member(self.aliveplayers[i].id).mention} играет за сторону кобылок!")
             else:
-                ctx.send("Вы должны быть ведущим для исполнения данной команды!")
+                await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
         else:
-            ctx.send("Нет запущенных игр!")
+            await ctx.send("Нет запущенных игр!")
 
 
     @commands.command(
@@ -470,3 +478,13 @@ def setup(bot):
     bot.add_cog(Mafia(bot))
 
 # TODO: do a full game ending mechanic?
+# TODO: уведомление что кто-то вошел
+# TODO: исправить порядок создания и удаления ролей V
+# TODO: создаёт 2 воис канала!  V
+# TODO: прописать везде await   V
+# TODO: при создании голосового канала дать возможность просматривать его наблюдателям  V
+# TODO: игроки могут видеть general даже ночью  V
+# TODO: исправить голосовой канал
+# TODO: канал для мафии
+# TODO: счётчик прожитых дней
+# TODO: изменения правил разговора
