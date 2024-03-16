@@ -19,7 +19,7 @@ class Testing(commands.Cog):
             color=0xfffff
         )
         await ctx.send(embed=embed, view=view)
-        log(f"{ctx.author.mention} used /embedtest")
+        log(f"{ctx.author.name} used /embedtest")
         await view.wait()
 
         if view.value is None:
