@@ -503,7 +503,20 @@ class Mafia(commands.Cog):
                             await self.generalchannel.channel.send(
                                 f"{player.member.mention} - **Помощник шерифа**")
 
-                    # TODO: выдать права на просмотр каналов после игры!
+                    # Открытие каналов на конец игры
+                    await self.generalchannel.channel.set_permissions(self.mafiarole.role, view_channel=True, send_messages=True)
+                    await self.generalchannel.channel.set_permissions(self.spectatorrole.role, view_channel=True, send_messages=True)
+                    log(f"{self.generalchannel.name} unlocked!")
+                    await self.spectatorchannel.channel.set_permissions(self.mafiarole.role, view_channel=True, send_messages=True)
+                    await self.spectatorchannel.channel.set_permissions(self.spectatorrole.role, view_channel=True, send_messages=True)
+                    log(f"{self.spectatorchannel.name} unlocked!")
+                    await self.voicechannel.channel.set_permissions(self.mafiarole.role,
+                                                                    view_channel=True,
+                                                                    speak=True)
+                    await self.voicechannel.channel.set_permissions(self.spectatorrole.role,
+                                                                    view_channel=True,
+                                                                    speak=True)
+                    log(f"{self.voicechannel.name} unlocked!")
 
                     await ctx.send("Готово! Игра окончена!")
                     return 0
