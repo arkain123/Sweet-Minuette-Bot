@@ -683,36 +683,30 @@ class Mafia(commands.Cog):
     async def endmafia(self, ctx):
         log(f"{ctx.author} used /endmafia")
         if self.LEVEL == "START" or self.LEVEL == "PRESTART":
-            if (ctx.guild.roles[3] in ctx.author.roles) and (ctx.guild.roles[3].name == "GM"):
+            if self.gmrole.role in ctx.author.roles:
                 self.LEVEL = "NOTHING"
+                log(f"LEVEL := {self.LEVEL}")
                 self.PHASE = "DAY"
-                log(f"{ctx.author} used /endmafia!")
-                if ctx.guild.roles[1].name == "mfplayer":
-                    log(f"deleted role {ctx.guild.roles[1].name}")
-                    await ctx.guild.roles[1].delete()
-                if ctx.guild.roles[1].name == "spectator":
-                    log(f"deleted role {ctx.guild.roles[1].name}")
-                    await ctx.guild.roles[1].delete()
-                if ctx.guild.roles[1].name == "GM":
-                    log(f"deleted role {ctx.guild.roles[1].name}")
-                    await ctx.guild.roles[1].delete()
-                channelstodelete = []
-                for i in range(len(ctx.guild.channels)):
-                    if ctx.guild.channels[i].category == ctx.guild.categories[1]:
-                        channelstodelete.append(ctx.guild.channels[i])
-                for i in range(len(channelstodelete)):
-                    log(f"deleted channel {channelstodelete[i].name}")
-                    await channelstodelete[i].delete()
-                log(f"deleted category {ctx.guild.categories[1].name}")
-                await ctx.guild.categories[1].delete()
+                log(f"PHASE := {self.PHASE}")
+                await self.mafiarole.role.delete()
+                log(f"mafiarole deleted")
+                await self.spectatorrole.role.delete()
+                log(f"spectator deleted")
+                await self.gmrole.role.delete()
+                log(f"gm deleted")
+                for channel in self.category.channels:
+                    log(f"{channel.channel.name} deleted")
+                    channel.channel.delete()
+                log(f"{self.category.channel.name} deleted")
+                self.category.channel.delete()
                 await ctx.send("Игра остановлена")
+                log("game ended successfully")
             else:
-                await ctx.send("У вас нет прав на исполнение данной команды")
-                log(f"{ctx.author.name} used /endmafia, but unsuccessful!")
-                warning(f"{ctx.author.name} was trying to stop the game!")
+                await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
+                warning(f"FAIL: Insufficent rights - {ctx.author.name}")
         else:
-            await ctx.send("Игра еще не запущена")
-            log(f"{ctx.author.name} used /endmafia, but game was not started!")
+            await ctx.send("Нет созданных игр! Используйте `/prestmafia`!")
+            warning("FAIL: game wasn't created!")
 
     @commands.command(
         name="status",
