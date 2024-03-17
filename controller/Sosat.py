@@ -2,13 +2,13 @@ from disnake.ext import commands
 from view.console_out import log, important, warning, error
 
 
-class Huy(commands.Cog):
+class Sosat(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        important("COGS module Huy connected")
+        important("COGS module Sosat connected")
 
     @commands.command(
-        name="Huy",
+        name="Sosat",
         usage="/sosnul_huica",
         description="Соснуть хуйца 10 раз"
     )
