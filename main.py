@@ -4,7 +4,7 @@ import view.console_out
 import random
 from dotenv import load_dotenv
 import os
-from controller import debug, botcommands, events, testing, huypipiskapopa
+from controller import debug, botcommands, events, testing, Sosat
 from view import classes, console_out
 
 
@@ -28,7 +28,7 @@ bot = commands.Bot(command_prefix=PREFIX, help_command=None, intents=intents, te
 
 connections += connect("controller.botcommands")
 connections += connect("controller.debug")
-connections += connect("controller.huypipiskapopa")
+connections += connect("controller.Sosat")
 # connections += connect("controller.events")
 connections += connect("controller.testing")
 connections += connect("controller.mafia")
