@@ -10,7 +10,7 @@ class Testing(commands.Cog):
         self.bot = bot
         important("COGS module Testing connected")
 
-    @commands.command()
+    @commands.slash_command()
     async def embedtest(self, ctx):
         view = Button()
         embed = disnake.Embed(
