@@ -17,7 +17,7 @@ class Commands(commands.Cog):
     )
     async def hello(self, inter):
         await inter.send("world")
-        log(f"{inter.author.mention} used /hello")
+        log(f"{inter.author.name} used /hello")
 
     @commands.slash_command(
         name="roll",
