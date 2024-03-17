@@ -7,7 +7,7 @@ class Sosat(commands.Cog):
         self.bot = bot
         important("COGS module Sosat connected")
 
-    @commands.command(
+    @commands.slash_command(
         name="Sosat",
         usage="/sosnul_huica",
         description="Соснуть хуйца 10 раз"
