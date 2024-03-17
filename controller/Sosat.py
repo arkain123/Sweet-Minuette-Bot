@@ -21,4 +21,4 @@ class Sosat(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Huy(bot))
+    bot.add_cog(Sosat(bot))
