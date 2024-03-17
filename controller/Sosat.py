@@ -10,7 +10,7 @@ class Sosat(commands.Cog):
     @commands.command(
         name="Sosat",
         usage="/sosnul_huica",
-        description="Соснуть хуйца 10 раз"
+        description="Соснуть хуйца 3 раз"
     )
     async def sosnul_huica(self, ctx):
         log(f"{ctx.author} used /sosnul_huica")
