@@ -1,7 +1,5 @@
-import disnake
 from disnake.ext import commands
 from view.console_out import log, important, warning, error
-from view.classes import Button, DropdownView
 
 
 class Huy(commands.Cog):
@@ -20,3 +18,7 @@ class Huy(commands.Cog):
         while a != 0:
             await ctx.send(f'{ctx.author.mention} *сосет*')
             a -= 1
+
+
+def setup(bot):
+    bot.add_cog(Huy(bot))

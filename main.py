@@ -4,7 +4,7 @@ import view.console_out
 import random
 from dotenv import load_dotenv
 import os
-from controller import debug, botcommands, events, testing
+from controller import debug, botcommands, events, testing, huypipiskapopa
 from view import classes, console_out
 
 
@@ -17,7 +17,7 @@ def connect(module):
         return 0
 
 
-nummodules = 6
+nummodules = 7
 load_dotenv()
 PREFIX = '/'
 intents = disnake.Intents().all()
@@ -28,6 +28,7 @@ bot = commands.Bot(command_prefix=PREFIX, help_command=None, intents=intents, te
 
 connections += connect("controller.botcommands")
 connections += connect("controller.debug")
+connections += connect("controller.huypipiskapopa")
 # connections += connect("controller.events")
 connections += connect("controller.testing")
 connections += connect("controller.mafia")
