@@ -217,7 +217,7 @@ class Mafia(commands.Cog):
             await self.guild.create_category("MAFIA GENERAL", overwrites={
                 self.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
                 self.gmrole.role: disnake.PermissionOverwrite(view_channel=True),
-                self.spectatorrole.role: disnake.PermissionOverwrite(view_channel=True),
+                self.spectatorrole.role: disnake.PermissionOverwrite(view_channel=True, add_reactions=False),
                 self.mafiarole.role: disnake.PermissionOverwrite(view_channel=True)
             }, position=0)
             self.category = Category(self.guild.categories[1])
@@ -225,8 +225,8 @@ class Mafia(commands.Cog):
             await self.guild.create_text_channel("general", category=self.category.channel, overwrites={
                 self.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
                 self.gmrole.role: disnake.PermissionOverwrite(view_channel=True),
-                self.spectatorrole.role: disnake.PermissionOverwrite(view_channel=True, send_messages=False),
-                self.mafiarole.role: disnake.PermissionOverwrite(view_channel=True, send_messages=False)
+                self.spectatorrole.role: disnake.PermissionOverwrite(view_channel=True, send_messages=False, add_reactions=False),
+                self.mafiarole.role: disnake.PermissionOverwrite(view_channel=True, send_messages=False, )
             }, position=0)
             self.generalchannel = Channel(self.category.channel.channels[0])
             log(f"created channel {self.generalchannel.channel.name}")
@@ -534,7 +534,8 @@ class Mafia(commands.Cog):
                     await ctx.guild.categories[1].channels[0].send("**Наступает ночь...**")
                     await self.generalchannel.channel.set_permissions(self.mafiarole.role,
                                                                       send_messages=False,
-                                                                      view_channel=True)
+                                                                      view_channel=True,
+                                                                      add_reactions=False)
                     log(f"Locked channel: {self.generalchannel.name}")
                     await self.voicechannel.channel.set_permissions(self.mafiarole.role,
                                                                     view_channel=True,
@@ -567,7 +568,8 @@ class Mafia(commands.Cog):
                             player.days += 1
                     await self.generalchannel.channel.set_permissions(self.mafiarole.role,
                                                                       send_messages=True,
-                                                                      view_channel=True)
+                                                                      view_channel=True,
+                                                                      add_reactions=True)
                     log(f"Unlocked channel: {self.generalchannel.name}")
                     await self.voicechannel.channel.set_permissions(self.mafiarole.role,
                                                                     view_channel=True,
