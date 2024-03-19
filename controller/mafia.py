@@ -281,14 +281,11 @@ class Mafia(commands.Cog):
             return 0
         log(f"{ctx.author} used /stmafia")
         if self.LEVEL == "PRESTART":
-            self.HEALID = 0
-            log(f"HEALID := {self.HEALID}")
-            self.LEVEL = "START"
-            log(f"LEVEL := {self.LEVEL}")
-            self.PHASE = "DAY"
-            log(f"PHASE := {self.PHASE}")
-            self.DAY = 0
-            log(f"DAY := {self.DAY}")
+            # Проверка на количество игроков
+            if len(self.prestplayers) < 4:
+                await ctx.send(f"Не можем начать, слишком мало игроков: {len(self.prestplayers)}")
+                warning(f"FAIL: Unable to start: Small players count! - {len(self.prestplayers)}")
+                return 0
 
             # Удаляем у игроков роль наблюдателей и перемещаем их в словарь Prestplayers
             for player in self.regplayers:
@@ -298,11 +295,14 @@ class Mafia(commands.Cog):
                     log(f"removed role {self.spectatorrole.name} from {self.prestplayers[player].name}")
                     log(f"{self.prestplayers[player].name} now a player")
 
-            # Проверка на количество игроков
-            if len(self.prestplayers) < 4:
-                await ctx.send(f"Не можем начать, слишком мало игроков: {len(self.prestplayers)}")
-                warning(f"FAIL: Unable to start: Small players count! - {len(self.prestplayers)}")
-                return 0
+            self.HEALID = 0
+            log(f"HEALID := {self.HEALID}")
+            self.LEVEL = "START"
+            log(f"LEVEL := {self.LEVEL}")
+            self.PHASE = "DAY"
+            log(f"PHASE := {self.PHASE}")
+            self.DAY = 0
+            log(f"DAY := {self.DAY}")
 
             # Создаём персональные каналы
             i = 0
