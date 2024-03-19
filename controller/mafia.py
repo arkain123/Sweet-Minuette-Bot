@@ -247,10 +247,10 @@ class Mafia(commands.Cog):
             self.commandschannel = Channel(self.category.channel.channels[2])
             log(f"created channel {self.commandschannel.channel.name}")
             await self.guild.create_voice_channel("voice", category=self.category.channel, overwrites={
-                self.guild.default_role: disnake.PermissionOverwrite(view_channel=False, speak=False),
-                self.gmrole.role: disnake.PermissionOverwrite(view_channel=True, speak=True),
-                self.spectatorrole.role: disnake.PermissionOverwrite(view_channel=True, speak=False),
-                self.mafiarole.role: disnake.PermissionOverwrite(view_channel=True, speak=True)
+                self.guild.default_role: disnake.PermissionOverwrite(view_channel=False, speak=False, use_voice_activation=False),
+                self.gmrole.role: disnake.PermissionOverwrite(view_channel=True, speak=True, use_voice_activation=True),
+                self.spectatorrole.role: disnake.PermissionOverwrite(view_channel=True, speak=False, use_voice_activation=False),
+                self.mafiarole.role: disnake.PermissionOverwrite(view_channel=True, speak=True, use_voice_activation=True)
             }, position=3)
             self.voicechannel = Channel(self.category.channel.channels[3])
             log(f"created channel {self.voicechannel.channel.name}")
@@ -519,10 +519,12 @@ class Mafia(commands.Cog):
                     log(f"{self.spectatorchannel.name} unlocked!")
                     await self.voicechannel.channel.set_permissions(self.mafiarole.role,
                                                                     view_channel=True,
-                                                                    speak=True)
+                                                                    speak=True,
+                                                                    use_voice_activation=True)
                     await self.voicechannel.channel.set_permissions(self.spectatorrole.role,
                                                                     view_channel=True,
-                                                                    speak=True)
+                                                                    speak=True,
+                                                                    use_voice_activation=True)
                     log(f"{self.voicechannel.name} unlocked!")
 
                     await ctx.send("Готово! Игра окончена!")
@@ -539,7 +541,8 @@ class Mafia(commands.Cog):
                     log(f"Locked channel: {self.generalchannel.name}")
                     await self.voicechannel.channel.set_permissions(self.mafiarole.role,
                                                                     view_channel=True,
-                                                                    speak=False)
+                                                                    speak=False,
+                                                                    use_voice_activation=False)
                     log(f"Locked channel: {self.voicechannel.name}")
                 else:
                     self.PHASE = "DAY"
@@ -573,7 +576,8 @@ class Mafia(commands.Cog):
                     log(f"Unlocked channel: {self.generalchannel.name}")
                     await self.voicechannel.channel.set_permissions(self.mafiarole.role,
                                                                     view_channel=True,
-                                                                    speak=True)
+                                                                    speak=True,
+                                                                    use_voice_activation=True)
                     log(f"Unlocked channel: {self.voicechannel.name}")
                 await ctx.send(f"Готово! Наступает {self.PHASE}")
                 log(f"Successfully changed phase to {self.PHASE}!")
