@@ -100,7 +100,7 @@ class Mafia(commands.Cog):
         description="Зайти в игру Мафия"
     )
     async def join(self, inter):
-        log(f"{inter.author} used /join")
+        log(f"{inter.author.name} used /join")
         if self.LEVEL == "PRESTART":
             if inter.author.id in self.regplayers.keys():
                 await inter.send("Вы уже зарегистрированы в игре! Используйте `/leave` для выхода.")
@@ -130,7 +130,7 @@ class Mafia(commands.Cog):
     )
     async def leave(self, inter):
         # ГМ не может выходить до конца игры
-        log(f"{inter.author} used /leave")
+        log(f"{inter.author.name} used /leave")
         if self.LEVEL != "NOTHING":
             if inter.author.id in self.regplayers.keys():
                 await inter.author.remove_roles(self.mafiarole.role)
@@ -158,7 +158,7 @@ class Mafia(commands.Cog):
         description="Наблюдать за игрой Мафия"
     )
     async def spectate(self, inter):
-        log(f"{inter.author} used /spectate")
+        log(f"{inter.author.name} used /spectate")
         if self.LEVEL != "NOTHING":
             if inter.author.id in self.regplayers.keys():
                 await inter.send("Вы уже наблюдаете за игрой! Используйте `/leave` для выхода.")
@@ -182,7 +182,7 @@ class Mafia(commands.Cog):
         description="Открыть набор на игру Мафия"
     )
     async def prestmafia(self, ctx):
-        log(f"{ctx.author} used /prestmafia")
+        log(f"{ctx.author.name} used /prestmafia")
         if self.LEVEL == "NOTHING":
 
             # Очищаем кеш прошлой игры
@@ -217,7 +217,7 @@ class Mafia(commands.Cog):
             await self.guild.create_category("MAFIA GENERAL", overwrites={
                 self.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
                 self.gmrole.role: disnake.PermissionOverwrite(view_channel=True),
-                self.spectatorrole.role: disnake.PermissionOverwrite(view_channel=True),
+                self.spectatorrole.role: disnake.PermissionOverwrite(view_channel=True, add_reactions=False),
                 self.mafiarole.role: disnake.PermissionOverwrite(view_channel=True)
             }, position=0)
             self.category = Category(self.guild.categories[1])
@@ -225,8 +225,8 @@ class Mafia(commands.Cog):
             await self.guild.create_text_channel("general", category=self.category.channel, overwrites={
                 self.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
                 self.gmrole.role: disnake.PermissionOverwrite(view_channel=True),
-                self.spectatorrole.role: disnake.PermissionOverwrite(view_channel=True, send_messages=False),
-                self.mafiarole.role: disnake.PermissionOverwrite(view_channel=True, send_messages=False)
+                self.spectatorrole.role: disnake.PermissionOverwrite(view_channel=True, send_messages=False, add_reactions=False),
+                self.mafiarole.role: disnake.PermissionOverwrite(view_channel=True, send_messages=False, )
             }, position=0)
             self.generalchannel = Channel(self.category.channel.channels[0])
             log(f"created channel {self.generalchannel.channel.name}")
@@ -247,10 +247,10 @@ class Mafia(commands.Cog):
             self.commandschannel = Channel(self.category.channel.channels[2])
             log(f"created channel {self.commandschannel.channel.name}")
             await self.guild.create_voice_channel("voice", category=self.category.channel, overwrites={
-                self.guild.default_role: disnake.PermissionOverwrite(view_channel=False, speak=False),
-                self.gmrole.role: disnake.PermissionOverwrite(view_channel=True, speak=True),
-                self.spectatorrole.role: disnake.PermissionOverwrite(view_channel=True, speak=False),
-                self.mafiarole.role: disnake.PermissionOverwrite(view_channel=True, speak=True)
+                self.guild.default_role: disnake.PermissionOverwrite(view_channel=False, speak=False, use_voice_activation=False),
+                self.gmrole.role: disnake.PermissionOverwrite(view_channel=True, speak=True, use_voice_activation=True),
+                self.spectatorrole.role: disnake.PermissionOverwrite(view_channel=True, speak=False, use_voice_activation=False),
+                self.mafiarole.role: disnake.PermissionOverwrite(view_channel=True, speak=True, use_voice_activation=True)
             }, position=3)
             self.voicechannel = Channel(self.category.channel.channels[3])
             log(f"created channel {self.voicechannel.channel.name}")
@@ -279,16 +279,14 @@ class Mafia(commands.Cog):
             await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
             warning(f"FAIL: Insufficent rights - {ctx.author.name}")
             return 0
-        log(f"{ctx.author} used /stmafia")
+        log(f"{ctx.author.name} used /stmafia")
+        # Проверка на PRESTMAFIA
         if self.LEVEL == "PRESTART":
-            self.HEALID = 0
-            log(f"HEALID := {self.HEALID}")
-            self.LEVEL = "START"
-            log(f"LEVEL := {self.LEVEL}")
-            self.PHASE = "DAY"
-            log(f"PHASE := {self.PHASE}")
-            self.DAY = 0
-            log(f"DAY := {self.DAY}")
+            # Проверка на количество игроков
+            if len(self.prestplayers) < 4:
+                await ctx.send(f"Не можем начать, слишком мало игроков: {len(self.prestplayers)}")
+                warning(f"FAIL: Unable to start: Small players count! - {len(self.prestplayers)}")
+                return 0
 
             # Удаляем у игроков роль наблюдателей и перемещаем их в словарь Prestplayers
             for player in self.regplayers:
@@ -298,11 +296,14 @@ class Mafia(commands.Cog):
                     log(f"removed role {self.spectatorrole.name} from {self.prestplayers[player].name}")
                     log(f"{self.prestplayers[player].name} now a player")
 
-            # Проверка на количество игроков
-            if len(self.prestplayers) < 4:
-                await ctx.send(f"Не можем начать, слишком мало игроков: {len(self.prestplayers)}")
-                warning(f"FAIL: Unable to start: Small players count! - {len(self.prestplayers)}")
-                return 0
+            self.HEALID = 0
+            log(f"HEALID := {self.HEALID}")
+            self.LEVEL = "START"
+            log(f"LEVEL := {self.LEVEL}")
+            self.PHASE = "DAY"
+            log(f"PHASE := {self.PHASE}")
+            self.DAY = 0
+            log(f"DAY := {self.DAY}")
 
             # Создаём персональные каналы
             i = 0
@@ -472,7 +473,7 @@ class Mafia(commands.Cog):
         description="Следующая фаза игры"
     )
     async def next(self, ctx):
-        log(f"{ctx.author} used /next")
+        log(f"{ctx.author.name} used /next")
         if self.LEVEL == "START":
             # Проверка на роль ГМ-а
             if self.gmrole.role in ctx.author.roles:
@@ -518,10 +519,12 @@ class Mafia(commands.Cog):
                     log(f"{self.spectatorchannel.name} unlocked!")
                     await self.voicechannel.channel.set_permissions(self.mafiarole.role,
                                                                     view_channel=True,
-                                                                    speak=True)
+                                                                    speak=True,
+                                                                    use_voice_activation=True)
                     await self.voicechannel.channel.set_permissions(self.spectatorrole.role,
                                                                     view_channel=True,
-                                                                    speak=True)
+                                                                    speak=True,
+                                                                    use_voice_activation=True)
                     log(f"{self.voicechannel.name} unlocked!")
 
                     await ctx.send("Готово! Игра окончена!")
@@ -533,11 +536,13 @@ class Mafia(commands.Cog):
                     await ctx.guild.categories[1].channels[0].send("**Наступает ночь...**")
                     await self.generalchannel.channel.set_permissions(self.mafiarole.role,
                                                                       send_messages=False,
-                                                                      view_channel=True)
+                                                                      view_channel=True,
+                                                                      add_reactions=False)
                     log(f"Locked channel: {self.generalchannel.name}")
                     await self.voicechannel.channel.set_permissions(self.mafiarole.role,
                                                                     view_channel=True,
-                                                                    speak=False)
+                                                                    speak=False,
+                                                                    use_voice_activation=False)
                     log(f"Locked channel: {self.voicechannel.name}")
                 else:
                     self.PHASE = "DAY"
@@ -566,11 +571,13 @@ class Mafia(commands.Cog):
                             player.days += 1
                     await self.generalchannel.channel.set_permissions(self.mafiarole.role,
                                                                       send_messages=True,
-                                                                      view_channel=True)
+                                                                      view_channel=True,
+                                                                      add_reactions=True)
                     log(f"Unlocked channel: {self.generalchannel.name}")
                     await self.voicechannel.channel.set_permissions(self.mafiarole.role,
                                                                     view_channel=True,
-                                                                    speak=True)
+                                                                    speak=True,
+                                                                    use_voice_activation=True)
                     log(f"Unlocked channel: {self.voicechannel.name}")
                 await ctx.send(f"Готово! Наступает {self.PHASE}")
                 log(f"Successfully changed phase to {self.PHASE}!")
@@ -590,7 +597,7 @@ class Mafia(commands.Cog):
         description="Убить игрока по id"
     )
     async def kill(self, ctx, k_id):
-        log(f"{ctx.author} used /kill")
+        log(f"{ctx.author.name} used /kill")
         if self.LEVEL == "START":
             # Проверка на права
             if self.gmrole.role in ctx.author.roles:
@@ -612,7 +619,7 @@ class Mafia(commands.Cog):
         description="Казнить игрока по id"
     )
     async def execute(self, ctx, e_id):
-        log(f"{ctx.author} used /execute")
+        log(f"{ctx.author.name} used /execute")
         if self.LEVEL == "START":
             # Проверка на права
             if self.gmrole.role in ctx.author.roles:
@@ -648,7 +655,7 @@ class Mafia(commands.Cog):
         description="Вылечить игрока по id"
     )
     async def heal(self, ctx, h_id):
-        log(f"{ctx.author} used /heal")
+        log(f"{ctx.author.name} used /heal")
         if self.LEVEL == "START":
             # Проверка на права
             if self.gmrole.role in ctx.author.roles:
@@ -674,7 +681,7 @@ class Mafia(commands.Cog):
         desctiption="Проверить игрока"
     )
     async def inspect(self, ctx, i_id):
-        log(f"{ctx.author} used /inspect")
+        log(f"{ctx.author.name} used /inspect")
         if self.LEVEL == "START":
             if self.gmrole.role in ctx.author.roles:
                 if self.aliveplayers[i_id].role == self.ROLES[1] or self.aliveplayers[i_id].role == self.ROLES[4]:
@@ -699,7 +706,7 @@ class Mafia(commands.Cog):
         description="Окончить игру"
     )
     async def endmafia(self, ctx):
-        log(f"{ctx.author} used /endmafia")
+        log(f"{ctx.author.name} used /endmafia")
         if self.LEVEL == "START" or self.LEVEL == "PRESTART":
             if self.gmrole.role in ctx.author.roles:
                 self.LEVEL = "NOTHING"
@@ -732,25 +739,33 @@ class Mafia(commands.Cog):
         description="Информация по игре Мафия"
     )
     async def status(self, ctx):
-        # TODO: если нету мафия канала - писать NONE
+        log(f"{ctx.author.name} used /status")
+        if self.LEVEL == "NOTHING":
+            await ctx.send("Нет созданных игр")
+            warning("FAIL: no existed games!")
+            return 0
         log(f"{ctx.author} used /status")
         if self.gmrole.role in ctx.author.roles:
             # TODO: Использовать тройные кавычки
-            await ctx.send(f'''mafiarole = {self.mafiarole.name} \n
-            gmrole = {self.gmrole.name} \n 
-            spectatorrole = {self.spectatorrole.name} \n
-            guild = {self.guild.name} \n            
-            GM = {self.GM.name} \n
-            generalchannel = {self.generalchannel.name} \n
-            commandschannel = {self.commandschannel.name} \n
-            spectatorchannel = {self.spectatorchannel.name} \n
-            voicechannel = {self.voicechannel.name} \n
-            mafiachannel = {self.mafiachannel.name} \n
-            category = {self.category.name} \n
-            LEVEL = {self.LEVEL} \n
-            PHASE = {self.PHASE} \n
-            HEALID = {self.HEALID} \n
-            **Personal channels:**''')
+            await ctx.send(f'''mafiarole = {self.mafiarole.name}
+        gmrole = {self.gmrole.name}
+        spectatorrole = {self.spectatorrole.name}
+        guild = {self.guild.name}            
+        GM = {self.GM.name}
+        generalchannel = {self.generalchannel.name}
+        commandschannel = {self.commandschannel.name}
+        spectatorchannel = {self.spectatorchannel.name}
+        voicechannel = {self.voicechannel.name}
+            ''')
+            try:
+                await ctx.send(f"mafiachannel = {self.mafiachannel.name}")
+            except BaseException:
+                await ctx.send("mafiachannel = NONE")
+            await ctx.send(f'''category = {self.category.name}
+        LEVEL = {self.LEVEL}
+        PHASE = {self.PHASE}
+        HEALID = {self.HEALID}
+        **Personal channels:**''')
             for channeli in self.personalchannels:
                 channel = self.personalchannels[channeli]
                 await ctx.send(f"{channel.name}")
@@ -770,7 +785,7 @@ class Mafia(commands.Cog):
                 player = self.aliveplayers[playeri]
                 await ctx.send(f"{player.name}")
 
-            await ctx.send("**Mafia players::**")
+            await ctx.send("**Mafia players:**")
             for playeri in self.mafiaplayers:
                 player = self.mafiaplayers[playeri]
                 await ctx.send(f"{player.name}")
