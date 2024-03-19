@@ -100,7 +100,7 @@ class Mafia(commands.Cog):
         description="Зайти в игру Мафия"
     )
     async def join(self, inter):
-        log(f"{inter.author} used /join")
+        log(f"{inter.author.name} used /join")
         if self.LEVEL == "PRESTART":
             if inter.author.id in self.regplayers.keys():
                 await inter.send("Вы уже зарегистрированы в игре! Используйте `/leave` для выхода.")
@@ -130,7 +130,7 @@ class Mafia(commands.Cog):
     )
     async def leave(self, inter):
         # ГМ не может выходить до конца игры
-        log(f"{inter.author} used /leave")
+        log(f"{inter.author.name} used /leave")
         if self.LEVEL != "NOTHING":
             if inter.author.id in self.regplayers.keys():
                 await inter.author.remove_roles(self.mafiarole.role)
@@ -158,7 +158,7 @@ class Mafia(commands.Cog):
         description="Наблюдать за игрой Мафия"
     )
     async def spectate(self, inter):
-        log(f"{inter.author} used /spectate")
+        log(f"{inter.author.name} used /spectate")
         if self.LEVEL != "NOTHING":
             if inter.author.id in self.regplayers.keys():
                 await inter.send("Вы уже наблюдаете за игрой! Используйте `/leave` для выхода.")
@@ -182,7 +182,7 @@ class Mafia(commands.Cog):
         description="Открыть набор на игру Мафия"
     )
     async def prestmafia(self, ctx):
-        log(f"{ctx.author} used /prestmafia")
+        log(f"{ctx.author.name} used /prestmafia")
         if self.LEVEL == "NOTHING":
 
             # Очищаем кеш прошлой игры
@@ -279,7 +279,7 @@ class Mafia(commands.Cog):
             await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
             warning(f"FAIL: Insufficent rights - {ctx.author.name}")
             return 0
-        log(f"{ctx.author} used /stmafia")
+        log(f"{ctx.author.name} used /stmafia")
         # Проверка на PRESTMAFIA
         if self.LEVEL == "PRESTART":
             # Проверка на количество игроков
@@ -473,7 +473,7 @@ class Mafia(commands.Cog):
         description="Следующая фаза игры"
     )
     async def next(self, ctx):
-        log(f"{ctx.author} used /next")
+        log(f"{ctx.author.name} used /next")
         if self.LEVEL == "START":
             # Проверка на роль ГМ-а
             if self.gmrole.role in ctx.author.roles:
@@ -597,7 +597,7 @@ class Mafia(commands.Cog):
         description="Убить игрока по id"
     )
     async def kill(self, ctx, k_id):
-        log(f"{ctx.author} used /kill")
+        log(f"{ctx.author.name} used /kill")
         if self.LEVEL == "START":
             # Проверка на права
             if self.gmrole.role in ctx.author.roles:
@@ -619,7 +619,7 @@ class Mafia(commands.Cog):
         description="Казнить игрока по id"
     )
     async def execute(self, ctx, e_id):
-        log(f"{ctx.author} used /execute")
+        log(f"{ctx.author.name} used /execute")
         if self.LEVEL == "START":
             # Проверка на права
             if self.gmrole.role in ctx.author.roles:
@@ -655,7 +655,7 @@ class Mafia(commands.Cog):
         description="Вылечить игрока по id"
     )
     async def heal(self, ctx, h_id):
-        log(f"{ctx.author} used /heal")
+        log(f"{ctx.author.name} used /heal")
         if self.LEVEL == "START":
             # Проверка на права
             if self.gmrole.role in ctx.author.roles:
@@ -681,7 +681,7 @@ class Mafia(commands.Cog):
         desctiption="Проверить игрока"
     )
     async def inspect(self, ctx, i_id):
-        log(f"{ctx.author} used /inspect")
+        log(f"{ctx.author.name} used /inspect")
         if self.LEVEL == "START":
             if self.gmrole.role in ctx.author.roles:
                 if self.aliveplayers[i_id].role == self.ROLES[1] or self.aliveplayers[i_id].role == self.ROLES[4]:
@@ -706,7 +706,7 @@ class Mafia(commands.Cog):
         description="Окончить игру"
     )
     async def endmafia(self, ctx):
-        log(f"{ctx.author} used /endmafia")
+        log(f"{ctx.author.name} used /endmafia")
         if self.LEVEL == "START" or self.LEVEL == "PRESTART":
             if self.gmrole.role in ctx.author.roles:
                 self.LEVEL = "NOTHING"
@@ -739,25 +739,33 @@ class Mafia(commands.Cog):
         description="Информация по игре Мафия"
     )
     async def status(self, ctx):
-        # TODO: если нету мафия канала - писать NONE
+        log(f"{ctx.author.name} used /status")
+        if self.LEVEL == "NOTHING":
+            await ctx.send("Нет созданных игр")
+            warning("FAIL: no existed games!")
+            return 0
         log(f"{ctx.author} used /status")
         if self.gmrole.role in ctx.author.roles:
             # TODO: Использовать тройные кавычки
-            await ctx.send(f'''mafiarole = {self.mafiarole.name} \n
-            gmrole = {self.gmrole.name} \n 
-            spectatorrole = {self.spectatorrole.name} \n
-            guild = {self.guild.name} \n            
-            GM = {self.GM.name} \n
-            generalchannel = {self.generalchannel.name} \n
-            commandschannel = {self.commandschannel.name} \n
-            spectatorchannel = {self.spectatorchannel.name} \n
-            voicechannel = {self.voicechannel.name} \n
-            mafiachannel = {self.mafiachannel.name} \n
-            category = {self.category.name} \n
-            LEVEL = {self.LEVEL} \n
-            PHASE = {self.PHASE} \n
-            HEALID = {self.HEALID} \n
-            **Personal channels:**''')
+            await ctx.send(f'''mafiarole = {self.mafiarole.name}
+        gmrole = {self.gmrole.name}
+        spectatorrole = {self.spectatorrole.name}
+        guild = {self.guild.name}            
+        GM = {self.GM.name}
+        generalchannel = {self.generalchannel.name}
+        commandschannel = {self.commandschannel.name}
+        spectatorchannel = {self.spectatorchannel.name}
+        voicechannel = {self.voicechannel.name}
+            ''')
+            try:
+                await ctx.send(f"mafiachannel = {self.mafiachannel.name}")
+            except BaseException:
+                await ctx.send("mafiachannel = NONE")
+            await ctx.send(f'''category = {self.category.name}
+        LEVEL = {self.LEVEL}
+        PHASE = {self.PHASE}
+        HEALID = {self.HEALID}
+        **Personal channels:**''')
             for channeli in self.personalchannels:
                 channel = self.personalchannels[channeli]
                 await ctx.send(f"{channel.name}")
@@ -777,7 +785,7 @@ class Mafia(commands.Cog):
                 player = self.aliveplayers[playeri]
                 await ctx.send(f"{player.name}")
 
-            await ctx.send("**Mafia players::**")
+            await ctx.send("**Mafia players:**")
             for playeri in self.mafiaplayers:
                 player = self.mafiaplayers[playeri]
                 await ctx.send(f"{player.name}")
