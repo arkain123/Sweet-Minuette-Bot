@@ -280,6 +280,7 @@ class Mafia(commands.Cog):
             warning(f"FAIL: Insufficent rights - {ctx.author.name}")
             return 0
         log(f"{ctx.author} used /stmafia")
+        # Проверка на PRESTMAFIA
         if self.LEVEL == "PRESTART":
             # Проверка на количество игроков
             if len(self.prestplayers) < 4:
