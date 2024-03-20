@@ -4,7 +4,7 @@ import view.console_out
 import random
 from dotenv import load_dotenv
 import os
-from controller import debug, botcommands, events, testing, Sosat
+from controller import debug, botcommands, events, testing, Sosat, eastereggs
 from view import classes, console_out
 
 
@@ -17,7 +17,7 @@ def connect(module):
         return 0
 
 
-nummodules = 7
+nummodules = 8
 load_dotenv()
 PREFIX = '/'
 intents = disnake.Intents().all()
@@ -32,6 +32,7 @@ connections += connect("controller.Sosat")
 # connections += connect("controller.events")
 connections += connect("controller.testing")
 connections += connect("controller.mafia")
+connections += connect("controller.eastereggs")
 connections += classes.connected()
 connections += console_out.connected()
 
