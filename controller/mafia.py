@@ -186,6 +186,7 @@ class Mafia(commands.Cog):
         log(f"{ctx.author.name} used /prestmafia")
         if self.LEVEL == "NOTHING":
 
+            await ctx.send("Очищаем кеш прошлой игры...")
             # Очищаем кеш прошлой игры
             self.regplayers.clear()
             log("regplayers cleared")
@@ -203,6 +204,7 @@ class Mafia(commands.Cog):
             log(f"GM := {self.GM.member.name}")
 
             # Создаём роли
+            await ctx.send("Создаём роли...")
             await self.guild.create_role(name="GM")
             self.gmrole = Role(self.guild.roles[1])
             log(f"Role {self.guild.roles[1]} created")
@@ -215,6 +217,7 @@ class Mafia(commands.Cog):
             await self.GM.member.add_roles(self.gmrole.role)
 
             # Создаём каналы
+            await ctx.send("Создаём каналы...")
             await self.guild.create_category("MAFIA GENERAL", overwrites={
                 self.guild.default_role: disnake.PermissionOverwrite(view_channel=False),
                 self.gmrole.role: disnake.PermissionOverwrite(view_channel=True),
@@ -257,6 +260,7 @@ class Mafia(commands.Cog):
             log(f"created channel {self.voicechannel.channel.name}")
 
             # Рассылаем сообщения
+            await ctx.send("Рассылаем сообщения...")
             await self.generalchannel.channel.send(f"{self.mafiarole.role.mention}, добро пожаловать в игру. Сейчас идёт **фаза регистрации**. Во время этой фазы ведущий набирает игроков. **Ждите начала игры!** Если вы передумали участвовать в игре - напишите `/leave`")
             await self.generalchannel.channel.send("Канал **general** предназначен для общения игроков во время дневной фазы. Этот канал видят также и наблюдатели. Мертвые игроки писать в него не могут!")
             await self.generalchannel.channel.send("Канал **spectating** канал предназначеный для мертвых игроков и наблюдателей. В этом чате вы можете спокойно раскрывать свою роль и обсуждать игровые моменты")
@@ -264,6 +268,7 @@ class Mafia(commands.Cog):
             await self.commandschannel.channel.send(f"{self.gmrole.role.mention} Команды и заметки, которые вам могут пригодиться во время игры пишите сюда.")
             # await ctx.guild.categories[1].channels[4].send(f"Поздравляю, вам всем выпала роль мафии. В этом чате вы будете переговариваться и договариваться о том, кого убить")
 
+            await ctx.send("Готово!")
             await self.commandschannel.channel.send("Игра создана!")
             log("Game succesfully created!")
         else:
@@ -289,6 +294,7 @@ class Mafia(commands.Cog):
                 warning(f"FAIL: Unable to start: Small players count! - {len(self.prestplayers)}")
                 return 0
 
+            await ctx.send("Начинаем игру...")
             # Удаляем у игроков роль наблюдателей и перемещаем их в словарь Prestplayers
             for player in self.regplayers:
                 if self.regplayers[player].role == "NONE":
@@ -308,6 +314,7 @@ class Mafia(commands.Cog):
             log(f"DAY := {self.DAY}")
 
             # Создаём персональные каналы
+            await ctx.send("Создаём персональные каналы...")
             i = 0
             for player in self.prestplayers:
                 await self.guild.create_text_channel(str(self.prestplayers[player].name), category=self.category.channel, overwrites={
@@ -321,6 +328,8 @@ class Mafia(commands.Cog):
                 i += 1
                 log(f"created personal channel {self.personalchannels[player]} for {self.prestplayers[player].name}")
 
+            # Выдаём роли
+            await ctx.send("Выдаём роли...")
             for i in range(self.mafiacount):
                 randomnum = random.choice(list(self.prestplayers))
                 self.prestplayers[randomnum].role = self.ROLES[1]
@@ -395,6 +404,7 @@ class Mafia(commands.Cog):
                 self.generate_mares(list(self.prestplayers.values()))
 
             # Пишем участникам об их ролях
+            await ctx.send("Рассылаем сообщения...")
             for playeri in self.aliveplayers:
                 player = self.aliveplayers[playeri]
                 log(f"{player.name} == {self.personalchannels[player.id].name}?")
