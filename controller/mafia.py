@@ -1,5 +1,5 @@
 import disnake
-import random
+import random, math
 from disnake.ext import commands
 from view.console_out import log, important, warning
 
@@ -85,6 +85,7 @@ class Mafia(commands.Cog):
             # TODO:Add more roles (Not truly necessary)
         }
         self.HEALID = 0
+        self.mafiacount = 0
 
     def generate_mares(self, values):
         for person in values:
@@ -296,6 +297,7 @@ class Mafia(commands.Cog):
                     log(f"removed role {self.spectatorrole.name} from {self.prestplayers[player].name}")
                     log(f"{self.prestplayers[player].name} now a player")
 
+            self.mafiacount = math.ceil(len(self.prestplayers) / 4)
             self.HEALID = 0
             log(f"HEALID := {self.HEALID}")
             self.LEVEL = "START"
@@ -319,22 +321,17 @@ class Mafia(commands.Cog):
                 i += 1
                 log(f"created personal channel {self.personalchannels[player]} for {self.prestplayers[player].name}")
 
+            for i in range(self.mafiacount):
+                randomnum = random.choice(list(self.prestplayers))
+                self.prestplayers[randomnum].role = self.ROLES[1]
+                self.aliveplayers[randomnum] = self.prestplayers[randomnum]
+                self.prestplayers.pop(randomnum)
+                log(f"Assigned {self.ROLES[1]} role to {self.aliveplayers[randomnum].name}")
+
             # Выдаём роли
             if len(self.aliveplayers) >= 4 & len(self.aliveplayers) <= 6:
-                randomnum = random.choice(list(self.prestplayers))
-                self.prestplayers[randomnum].role = self.ROLES[1]
-                self.aliveplayers[randomnum] = self.prestplayers[randomnum]
-                self.prestplayers.pop(randomnum)
-                log(f"Assigned {self.ROLES[1]} role to {self.aliveplayers[randomnum].name}")
-
                 self.generate_mares(list(self.prestplayers.values()))
             elif len(self.aliveplayers) == 7:
-                randomnum = random.choice(list(self.prestplayers))
-                self.prestplayers[randomnum].role = self.ROLES[1]
-                self.aliveplayers[randomnum] = self.prestplayers[randomnum]
-                self.prestplayers.pop(randomnum)
-                log(f"Assigned {self.ROLES[1]} role to {self.aliveplayers[randomnum].name}")
-
                 randomnum = random.choice(list(self.prestplayers))
                 self.prestplayers[randomnum].role = self.ROLES[2]
                 self.aliveplayers[randomnum] = self.prestplayers[randomnum]
@@ -343,13 +340,6 @@ class Mafia(commands.Cog):
 
                 self.generate_mares(list(self.prestplayers.values()))
             elif len(self.aliveplayers) >= 8 & len(self.aliveplayers) <= 10:
-                for i in range(2):
-                    randomnum = random.choice(list(self.prestplayers))
-                    self.prestplayers[randomnum].role = self.ROLES[1]
-                    self.aliveplayers[randomnum] = self.prestplayers[randomnum]
-                    self.prestplayers.pop(randomnum)
-                    log(f"Assigned {self.ROLES[1]} role to {self.aliveplayers[randomnum].name}")
-
                 randomnum = random.choice(list(self.prestplayers))
                 self.prestplayers[randomnum].role = self.ROLES[2]
                 self.aliveplayers[randomnum] = self.prestplayers[randomnum]
@@ -364,13 +354,6 @@ class Mafia(commands.Cog):
 
                 self.generate_mares(list(self.prestplayers.values()))
             elif len(self.aliveplayers) > 10 & len(self.aliveplayers) <= 14:
-                for i in range(3):
-                    randomnum = random.choice(list(self.prestplayers))
-                    self.prestplayers[randomnum].role = self.ROLES[1]
-                    self.aliveplayers[randomnum] = self.prestplayers[randomnum]
-                    self.prestplayers.pop(randomnum)
-                    log(f"Assigned {self.ROLES[1]} role to {self.aliveplayers[randomnum].name}")
-
                 randomnum = random.choice(list(self.prestplayers))
                 self.prestplayers[randomnum].role = self.ROLES[2]
                 self.aliveplayers[randomnum] = self.prestplayers[randomnum]
@@ -391,13 +374,6 @@ class Mafia(commands.Cog):
 
                 self.generate_mares(list(self.prestplayers.values()))
             else:
-                for i in range(4):
-                    randomnum = random.choice(list(self.prestplayers))
-                    self.prestplayers[randomnum].role = self.ROLES[1]
-                    self.aliveplayers[randomnum] = self.prestplayers[randomnum]
-                    self.prestplayers.pop(randomnum)
-                    log(f"Assigned {self.ROLES[1]} role to {self.aliveplayers[randomnum].name}")
-
                 randomnum = random.choice(list(self.prestplayers))
                 self.prestplayers[randomnum].role = self.ROLES[2]
                 self.aliveplayers[randomnum] = self.prestplayers[randomnum]
