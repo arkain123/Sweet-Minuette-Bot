@@ -336,8 +336,6 @@ class Mafia(commands.Cog):
                 self.aliveplayers[randomnum] = self.prestplayers[randomnum]
                 self.prestplayers.pop(randomnum)
                 log(f"Assigned {self.ROLES[1]} role to {self.aliveplayers[randomnum].name}")
-
-            # Выдаём роли
             if len(self.aliveplayers) >= 4 & len(self.aliveplayers) <= 6:
                 self.generate_mares(list(self.prestplayers.values()))
             elif len(self.aliveplayers) == 7:
@@ -732,7 +730,6 @@ class Mafia(commands.Cog):
             return 0
         log(f"{ctx.author} used /status")
         if self.gmrole.role in ctx.author.roles:
-            # TODO: Использовать тройные кавычки
             await ctx.send(f'''mafiarole = {self.mafiarole.name}
         gmrole = {self.gmrole.name}
         spectatorrole = {self.spectatorrole.name}
@@ -799,12 +796,3 @@ class Mafia(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Mafia(bot))
-
-# TODO: Изменить правила распределения ролей по настоящим правилам игры, а не как попало!
-# TODO: Продумать работу функции status в любых LEVELS
-# TODO: не удаляет категорию
-# TODO: удалять general
-# TODO: не удаляются каналы
-# TODO: Запретить ставить реакции на сообщения в general
-# TODO: перед stmafia проверить написано ли prestmafia
-# TODO: нельзя зайти после попытки создания игры
