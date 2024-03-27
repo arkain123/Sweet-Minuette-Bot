@@ -4,7 +4,7 @@ import view.console_out
 import random
 from dotenv import load_dotenv
 import os
-from controller import debug, botcommands, events, testing, eastereggs
+from controller import debug, botcommands, events, testing, eastereggs, mafia
 from view import classes, console_out
 
 
@@ -17,17 +17,17 @@ def connect(module):
         return 0
 
 
-nummodules = 4
+nummodules = 5
 load_dotenv()
 PREFIX = '/'
 intents = disnake.Intents().all()
 TOKEN = os.getenv('TOKEN')
 connections = 0
 
-bot = commands.Bot(command_prefix=PREFIX, help_command=None, intents=intents, test_guilds=[1175855563444330637, 715142906658422796])
+bot = commands.Bot(command_prefix=PREFIX, help_command=None, intents=intents, test_guilds=[1175855563444330637, 715142906658422796, 1222366560463618120])
 
 connections += connect("controller.botcommands")
-# connections += connect("controller.debug")
+connections += connect("controller.debug")
 # connections += connect("controller.events")
 # connections += connect("controller.testing")
 connections += connect("controller.mafia")
@@ -36,7 +36,7 @@ connections += connect("controller.eastereggs")
 connections += console_out.connected()
 
 # Number of successful module connections
-if connections == nummodules:
+if connections >= nummodules:
     console_out.important("All modules connected!")
 else:
     console_out.warning("Some modules cannot be connected!")
