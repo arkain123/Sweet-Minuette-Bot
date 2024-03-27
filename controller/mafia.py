@@ -169,7 +169,7 @@ class Mafia(commands.Cog):
             log(f"{inter.author.name} added to regplayers")
             self.regplayers[inter.author.id].role = "SPECTATOR"
             log(f"Assigned gamerole NONE to {inter.author}")
-            inter.author.add_roles(self.spectatorrole.role)
+            await inter.author.add_roles(self.spectatorrole.role)
             log(f"role {self.spectatorrole.name} added to {inter.author.name}")
             await self.generalchannel.channel.send(f"**{inter.author.name} зашел в наблюдатели**")
             await inter.send("Вы наблюдаете за игрой!")
@@ -595,7 +595,7 @@ class Mafia(commands.Cog):
             warning("FAIL: game wasn't started!")
         else:
             await ctx.send("Нет созданных игр! Используйте `/prestmafia`!")
-            warning("FAIL: game wasn't created!")
+            warning("FAIL: Game wasn't created!")
 
     @commands.command(
         name="execute",

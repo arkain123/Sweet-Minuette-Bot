@@ -17,7 +17,7 @@ class Debug(commands.Cog):
         description="Проверка работы модулей бота (console)",
     )
     async def ping(self, inter):
-        log(f"{inter.author} used /test")
+        log(f"{inter.author} used /ping")
         log(f"{inter.author} testing log message")
         warning(f"{inter.author} testing warning message")
         error(f"{inter.author} testing error message")

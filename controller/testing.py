@@ -31,6 +31,7 @@ class Testing(commands.Cog):
 
     @commands.command()
     async def dropdowntest(self, ctx):
+        log(f"{ctx.author.name} used /dropdowntest")
         await ctx.send("Выберите, что желаете заказать:", view=DropdownView())
 
 

@@ -30,6 +30,7 @@ class EasterEggs(commands.Cog):
 
     @commands.command()
     async def sus(self, ctx):
+        log(f"{ctx.author.name} used /sus")
         await ctx.send('''
 ⣿⣿⣿⠟⢹⣶⣶⣝⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 ⣿⣿⡟⢰⡌⠿⢿⣿⡾⢹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
