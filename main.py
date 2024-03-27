@@ -4,6 +4,9 @@ import view.console_out
 import random
 from dotenv import load_dotenv
 import os
+
+from controller import debug, botcommands, events, testing, eastereggs, mafia
+
 from view import classes, console_out
 
 
@@ -16,7 +19,7 @@ def connect(module):
         return 0
 
 
-nummodules = 8
+nummodules = 5
 load_dotenv()
 PREFIX = '/'
 intents = disnake.Intents().all()
@@ -28,12 +31,11 @@ bot = commands.Bot(command_prefix=PREFIX, help_command=None, intents=intents, te
 # подключение модулей
 connections += connect("controller.botcommands")
 connections += connect("controller.debug")
-connections += connect("controller.Sosat")
 # connections += connect("controller.events")
-connections += connect("controller.testing")
+# connections += connect("controller.testing")
 connections += connect("controller.mafia")
 connections += connect("controller.eastereggs")
-connections += classes.connected()
+# connections += classes.connected()
 connections += console_out.connected()
 
 # Number of successful module connections
