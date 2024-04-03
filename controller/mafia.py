@@ -288,7 +288,7 @@ class Mafia(commands.Cog):
         log(f"{ctx.author.name} used /stmafia")
         # Проверка на PRESTMAFIA
         if self.LEVEL == "PRESTART":
-            # Проверка на количество игроков
+            # Проверка на количество игроков    (setting)   default=4
             if len(self.prestplayers) < 4:
                 await ctx.send(f"Не можем начать, слишком мало игроков: {len(self.prestplayers)}")
                 warning(f"FAIL: Unable to start: Small players count! - {len(self.prestplayers)}")
@@ -470,6 +470,7 @@ class Mafia(commands.Cog):
                     else:
                         await self.generalchannel.channel.send(f"{self.mafiarole.role.mention}, у вас не получилось спастись от геноцида алмазных псов... **Победа алмазных псов за {self.DAY} дней!!**")
 
+                    await ctx.send(f"Игра окончена!")
                     await self.generalchannel.channel.send(f"**Остались в живых:**")
 
                     for playeri in self.aliveplayers:
@@ -587,6 +588,9 @@ class Mafia(commands.Cog):
             if self.gmrole.role in ctx.author.roles:
                 self.aliveplayers[k_id].alive = False
                 log(f"Attempting to kill {self.aliveplayers[k_id].name}!")
+                self.aliveplayers[int(k_id)].alive = False
+                log(f"Attempting to kill {self.aliveplayers[int(k_id)].name}!")
+                await ctx.send(f"Пытаемся убить {self.aliveplayers[int(k_id)].name}...")
             else:
                 await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
                 warning(f"FAIL: Insufficent rights - {ctx.author.name}")
@@ -643,12 +647,13 @@ class Mafia(commands.Cog):
         if self.LEVEL == "START":
             # Проверка на права
             if self.gmrole.role in ctx.author.roles:
-                log(f"Attempting to heal {self.aliveplayers[h_id].name}!")
+                log(f"Attempting to heal {self.aliveplayers[int(h_id)].name}!")
+                await ctx.send(f"Пытаемся вылечить {self.aliveplayers[int(h_id)].name}...")
                 if h_id == self.HEALID:
-                    ctx.send("Игрок уже был вылечен прошлый раз!")
+                    await ctx.send("Игрок уже был вылечен прошлый раз!")
                 else:
-                    self.aliveplayers[h_id].alive = True
-                    self.HEALID = h_id
+                    self.aliveplayers[int(h_id)].alive = True
+                    self.HEALID = int(h_id)
             else:
                 await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
                 warning(f"FAIL: Insufficent rights - {ctx.author.name}")
@@ -668,12 +673,12 @@ class Mafia(commands.Cog):
         log(f"{ctx.author.name} used /inspect")
         if self.LEVEL == "START":
             if self.gmrole.role in ctx.author.roles:
-                if self.aliveplayers[i_id].role == self.ROLES[1] or self.aliveplayers[i_id].role == self.ROLES[4]:
-                    await ctx.send(f"{self.aliveplayers[i_id].name} играет за сторону псов!")
-                    log(f"{self.aliveplayers[i_id].name} playing for dogs")
+                if self.aliveplayers[int(i_id)].role == self.ROLES[1] or self.aliveplayers[int(i_id)].role == self.ROLES[4]:
+                    await ctx.send(f"{self.aliveplayers[int(i_id)].name} играет за сторону псов!")
+                    log(f"{self.aliveplayers[int(i_id)].name} playing for dogs")
                 else:
-                    await ctx.send(f"{self.aliveplayers[i_id].name} играет за сторону кобылок!")
-                    log(f"{self.aliveplayers[i_id].name} playing for mares")
+                    await ctx.send(f"{self.aliveplayers[int(i_id)].name} играет за сторону кобылок!")
+                    log(f"{self.aliveplayers[int(i_id)].name} playing for mares")
             else:
                 await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
                 warning(f"FAIL: Insufficent rights - {ctx.author.name}")
