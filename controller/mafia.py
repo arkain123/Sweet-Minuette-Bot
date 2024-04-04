@@ -524,8 +524,8 @@ class Mafia(commands.Cog):
         usage="/join",
         description="Зайти в игру Мафия"
     )
-    async def join(self, inter):
-        log(f"{inter.author.name} used /join")
+    async def join(self, ctx):
+        log(f"{ctx.author.name} used /join")
         if self.LEVEL == "PRESTART":
             if ctx.author.id in self.regplayers.keys():
                 await fail(ctx,
@@ -547,9 +547,9 @@ class Mafia(commands.Cog):
         usage="/leave",
         description="Выйти из игры Мафия"
     )
-    async def leave(self, inter):
-        # ГМ не может выходить до конца игры
-        log(f"{inter.author.name} used /leave")
+    async def leave(self, ctx):
+        # TODO: ГМ не может выходить до конца игры
+        log(f"{ctx.author.name} used /leave")
         if self.LEVEL != "NOTHING":
             if ctx.author.id in self.regplayers.keys():
                 await self.leave_success(ctx)
@@ -567,8 +567,8 @@ class Mafia(commands.Cog):
         usage="/spectate",
         description="Наблюдать за игрой Мафия"
     )
-    async def spectate(self, inter):
-        log(f"{inter.author.name} used /spectate")
+    async def spectate(self, ctx):
+        log(f"{ctx.author.name} used /spectate")
         if self.LEVEL != "NOTHING":
             if ctx.author.id in self.regplayers.keys():
                 await fail(ctx,
