@@ -681,10 +681,7 @@ class Mafia(commands.Cog):
     async def next(self, ctx):
         log(f"{ctx.author.name} used /next")
         if self.LEVEL == "START":
-            # Проверка на роль ГМ-а
             if self.gmrole.role in ctx.author.roles:
-
-                # Проверка не закончена ли игра
                 if (len(self.aliveplayers) <= len(self.mafiaplayers)) or (len(self.mafiaplayers) == 0):
                     await self.game_ended(ctx)
                     return 0
@@ -712,7 +709,6 @@ class Mafia(commands.Cog):
     async def kill(self, ctx, k_id):
         log(f"{ctx.author.name} used /kill")
         if self.LEVEL == "START":
-            # Проверка на права
             if self.gmrole.role in ctx.author.roles:
                 await self.kill_success(ctx, k_id)
             else:
@@ -736,7 +732,6 @@ class Mafia(commands.Cog):
     async def execute(self, ctx, e_id):
         log(f"{ctx.author.name} used /execute")
         if self.LEVEL == "START":
-            # Проверка на права
             if self.gmrole.role in ctx.author.roles:
                 await self.execute_success(e_id)
             else:
@@ -760,7 +755,6 @@ class Mafia(commands.Cog):
     async def heal(self, ctx, h_id):
         log(f"{ctx.author.name} used /heal")
         if self.LEVEL == "START":
-            # Проверка на права
             if self.gmrole.role in ctx.author.roles:
                 await self.heal_success(ctx, h_id)
             else:
