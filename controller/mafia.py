@@ -1,5 +1,6 @@
 import disnake
-import random, math
+import random
+import math
 from disnake.ext import commands
 from view.console_out import log, important, warning
 
@@ -30,7 +31,6 @@ class Channel:
 
 
 class PersonalChannel(Channel):
-
     p_id = None
 
 
@@ -589,9 +589,8 @@ class Mafia(commands.Cog):
     )
     async def prestmafia(self, ctx):
         log(f"{ctx.author.name} used /prestmafia")
-        if self.LEVEL == "NOTHING":
 
-            await ctx.send("Очищаем кеш прошлой игры...")
+        if self.LEVEL == "NOTHING":
             # Очищаем кеш прошлой игры
             await self.clear_cache(ctx)
 
@@ -606,7 +605,7 @@ class Mafia(commands.Cog):
 
             await ctx.send("Готово!")
             await self.commandschannel.channel.send("Игра создана!")
-            log("Game succesfully created!")
+            log("Game successfully created!")
         else:
             await fail(ctx,
                        "Игра уже создана",
@@ -618,12 +617,12 @@ class Mafia(commands.Cog):
         description="Запустить игру Мафия"
     )
     async def stmafia(self, ctx):
+        log(f"{ctx.author.name} used /stmafia")
         if self.gmrole.role not in ctx.author.roles:
             await fail(ctx,
                        "Вы должны быть ведущим для исполнения данной команды!",
                        f"Insufficient rights - {ctx.author.name}")
             return 0
-        log(f"{ctx.author.name} used /stmafia")
         # Проверка на PRESTMAFIA
         if self.LEVEL == "PRESTART":
             # Проверка на количество игроков    (setting)   default=4
@@ -634,6 +633,7 @@ class Mafia(commands.Cog):
                 return 0
 
             await ctx.send("Начинаем игру...")
+
             # Удаляем у игроков роль наблюдателей и перемещаем их в словарь Prestplayers
             await self.spect_to_prest()
 
