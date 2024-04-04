@@ -846,7 +846,7 @@ class Mafia(commands.Cog):
                        "Нет созданных игр",
                        "no existed games!")
             return 0
-        log(f"{ctx.author} used /status")
+
         if self.gmrole.role in ctx.author.roles:
             await ctx.send(f'''mafiarole = {self.mafiarole.name}
         gmrole = {self.gmrole.name}
