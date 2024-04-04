@@ -50,6 +50,11 @@ class Role:
         self.name = role.name
 
 
+async def fail(ctx, user_msg, log_msg):
+    await ctx.send(f"{user_msg}")
+    warning(f"{log_msg}")
+
+
 class Mafia(commands.Cog):
 
     def __init__(self, bot):
@@ -103,9 +108,10 @@ class Mafia(commands.Cog):
     async def join(self, inter):
         log(f"{inter.author.name} used /join")
         if self.LEVEL == "PRESTART":
-            if inter.author.id in self.regplayers.keys():
-                await inter.send("Вы уже зарегистрированы в игре! Используйте `/leave` для выхода.")
-                warning(f"FAIL: {inter.author.name} already registered!")
+            if ctx.author.id in self.regplayers.keys():
+                await fail(ctx,
+                           "Вы уже зарегистрированы в игре! Используйте `/leave` для выхода.",
+                           f"{ctx.author.name} already registered!")
                 return 0
             self.regplayers[inter.author.id] = Player(inter.author)
             log(f"{inter.author.name} added to regplayers")
@@ -118,11 +124,13 @@ class Mafia(commands.Cog):
             log(f"Assigned gamerole NONE to {inter.author}")
             await inter.send("Вы зарегистрировались в игре!")
         elif self.LEVEL == "NOTHING":
-            await inter.send("Нет запущенных игр!")
-            warning(f"FAIL: game wasn't started")
+            await fail(ctx,
+                       "Нет запущенных игр!",
+                       "game wasn't started")
         else:
-            await inter.send("Игра уже началась, если хотите зайти в наблюдатели, используйте `/spectate`")
-            warning(f"FAIL: game was already started")
+            await fail(ctx,
+                       "Игра уже началась, если хотите зайти в наблюдатели, используйте `/spectate`",
+                       "game was already started")
 
     @commands.slash_command(
         name="leave",
@@ -146,12 +154,13 @@ class Mafia(commands.Cog):
                 log(f"removed {inter.author.name} from regplayers")
                 await inter.send("Вы покинули игру Мафия")
                 return 0
-            await inter.send("Вам нечего покидать!")
-            warning(f"FAIL: {inter.author.name} wasn't registered")
-
+            await fail(ctx,
+                       "Вам нечего покидать!",
+                       f"{ctx.author.name} wasn't registered")
         else:
-            await inter.send("Нет запущенных игр!")
-            warning(f"FAIL: game wasn't started")
+            await fail(ctx,
+                       "Нет запущенных игр!",
+                       "game wasn't started")
 
     @commands.slash_command(
         name="spectate",
@@ -161,9 +170,10 @@ class Mafia(commands.Cog):
     async def spectate(self, inter):
         log(f"{inter.author.name} used /spectate")
         if self.LEVEL != "NOTHING":
-            if inter.author.id in self.regplayers.keys():
-                await inter.send("Вы уже наблюдаете за игрой! Используйте `/leave` для выхода.")
-                warning(f"FAIL: {inter.author.name} already spectating")
+            if ctx.author.id in self.regplayers.keys():
+                await fail(ctx,
+                           "Вы уже наблюдаете за игрой! Используйте `/leave` для выхода.",
+                           f"{ctx.author.name} already spectating")
                 return 0
             self.regplayers[inter.author.id] = Player(inter.author)
             log(f"{inter.author.name} added to regplayers")
@@ -174,8 +184,9 @@ class Mafia(commands.Cog):
             await self.generalchannel.channel.send(f"**{inter.author.name} зашел в наблюдатели**")
             await inter.send("Вы наблюдаете за игрой!")
         else:
-            await inter.send("Нет запущенных игр!")
-            warning(f"FAIL: game wasn't started")
+            await fail(ctx,
+                       "Нет запущенных игр!",
+                       f"game wasn't started")
 
     @commands.slash_command(
         name="prestmafia",
@@ -272,8 +283,9 @@ class Mafia(commands.Cog):
             await self.commandschannel.channel.send("Игра создана!")
             log("Game succesfully created!")
         else:
-            await ctx.send("Игра уже создана")
-            warning("FAIL: game already created")
+            await fail(ctx,
+                       "Игра уже создана",
+                       "game already created")
 
     @commands.slash_command(
         name="stmafia",
@@ -282,16 +294,18 @@ class Mafia(commands.Cog):
     )
     async def stmafia(self, ctx):
         if self.gmrole.role not in ctx.author.roles:
-            await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
-            warning(f"FAIL: Insufficent rights - {ctx.author.name}")
+            await fail(ctx,
+                       "Вы должны быть ведущим для исполнения данной команды!",
+                       f"Insufficient rights - {ctx.author.name}")
             return 0
         log(f"{ctx.author.name} used /stmafia")
         # Проверка на PRESTMAFIA
         if self.LEVEL == "PRESTART":
             # Проверка на количество игроков    (setting)   default=4
             if len(self.prestplayers) < 4:
-                await ctx.send(f"Не можем начать, слишком мало игроков: {len(self.prestplayers)}")
-                warning(f"FAIL: Unable to start: Small players count! - {len(self.prestplayers)}")
+                await fail(ctx,
+                           f"Не можем начать, слишком мало игроков: {len(self.prestplayers)}",
+                           f"Unable to start: Small players count! - {len(self.prestplayers)}")
                 return 0
 
             await ctx.send("Начинаем игру...")
@@ -445,11 +459,13 @@ class Mafia(commands.Cog):
             log("Game succesfully started")
 
         elif self.LEVEL == "START":
-            await ctx.send("Игра уже началась")
-            warning("FAIL: game already started!")
+            await fail(ctx,
+                       "Игра уже началась",
+                       "game already started")
         else:
-            await ctx.send("Для начала запустите регистрацию - `/prestmafia`")
-            warning("FAIL: game wasn't created")
+            await fail(ctx,
+                       "Для начала запустите регистрацию - `/prestmafia`",
+                       "game wasn't created")
 
     @commands.slash_command(
         name="next",
@@ -567,14 +583,17 @@ class Mafia(commands.Cog):
                 await ctx.send(f"Готово! Наступает {self.PHASE}")
                 log(f"Successfully changed phase to {self.PHASE}!")
             else:
-                await ctx.send("У вас недостаточно прав для этого действия! Вы должны быть ведущим игры!")
-                warning(f"FAIL: Insufficent rights - {ctx.author.name}")
+                await fail(ctx,
+                           "У вас недостаточно прав для этого действия! Вы должны быть ведущим игры!",
+                           f"Insufficient rights - {ctx.author.name}")
         elif self.LEVEL == "PRESTART":
-            await ctx.send("Игра еще не запущена! Используйте `/stmafia`")
-            warning("FAIL: Game wasn't started")
+            await fail(ctx,
+                       "Игра еще не запущена! Используйте `/stmafia`",
+                       "Game wasn't started")
         else:
-            await ctx.send("Игра еще не создана! Используйте `/prestmafia`")
-            warning("FAIL: Game wasn't created")
+            await fail(ctx,
+                       "Игра еще не создана! Используйте `/prestmafia`",
+                       "Game wasn't created")
 
     @commands.command(
         name="kill",
@@ -592,14 +611,17 @@ class Mafia(commands.Cog):
                 log(f"Attempting to kill {self.aliveplayers[int(k_id)].name}!")
                 await ctx.send(f"Пытаемся убить {self.aliveplayers[int(k_id)].name}...")
             else:
-                await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
-                warning(f"FAIL: Insufficent rights - {ctx.author.name}")
+                await fail(ctx,
+                           "Вы должны быть ведущим для исполнения данной команды!",
+                           f"Insufficient rights - {ctx.author.name}")
         elif self.LEVEL == "PRESTART":
-            await ctx.send("Нет запущенных игр! Используйте `/stmafia`!")
-            warning("FAIL: game wasn't started!")
+            await fail(ctx,
+                       "Нет запущенных игр! Используйте `/stmafia`!",
+                       "game wasn't started!")
         else:
-            await ctx.send("Нет созданных игр! Используйте `/prestmafia`!")
-            warning("FAIL: Game wasn't created!")
+            await fail(ctx,
+                       "Нет созданных игр! Используйте `/prestmafia`!",
+                       "game wasn't created!")
 
     @commands.command(
         name="execute",
@@ -628,14 +650,17 @@ class Mafia(commands.Cog):
                 self.aliveplayers.pop(e_id)
                 log(f"player {self.aliveplayers[e_id].name} was pop-ed from aliveplayers dict")
             else:
-                await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
-                warning(f"FAIL: Insufficent rights - {ctx.author.name}")
+                await fail(ctx,
+                           "Вы должны быть ведущим для исполнения данной команды!",
+                           f"Insufficient rights - {ctx.author.name}")
         elif self.LEVEL == "PRESTART":
-            await ctx.send("Нет запущенных игр! Используйте `/stmafia`!")
-            warning("FAIL: game wasn't started!")
+            await fail(ctx,
+                       "Нет запущенных игр! Используйте `/stmafia`!",
+                       "game wasn't started!")
         else:
-            await ctx.send("Нет созданных игр! Используйте `/prestmafia`!")
-            warning("FAIL: game wasn't created!")
+            await fail(ctx,
+                       "Нет созданных игр! Используйте `/prestmafia`!",
+                       "game wasn't created!")
 
     @commands.command(
         name="heal",
@@ -655,14 +680,17 @@ class Mafia(commands.Cog):
                     self.aliveplayers[int(h_id)].alive = True
                     self.HEALID = int(h_id)
             else:
-                await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
-                warning(f"FAIL: Insufficent rights - {ctx.author.name}")
+                await fail(ctx,
+                           "Вы должны быть ведущим для исполнения данной команды!",
+                           f"Insufficient rights - {ctx.author.name}")
         elif self.LEVEL == "PRESTART":
-            await ctx.send("Нет запущенных игр! Используйте `/stmafia`!")
-            warning("FAIL: game wasn't started!")
+            await fail(ctx,
+                       "Нет запущенных игр! Используйте `/stmafia`!",
+                       "game wasn't started!")
         else:
-            await ctx.send("Нет созданных игр! Используйте `/prestmafia`!")
-            warning("FAIL: game wasn't created!")
+            await fail(ctx,
+                       "Нет созданных игр! Используйте `/prestmafia`!",
+                       "game wasn't created!")
 
     @commands.command(
         name="inspect",
@@ -680,14 +708,17 @@ class Mafia(commands.Cog):
                     await ctx.send(f"{self.aliveplayers[int(i_id)].name} играет за сторону кобылок!")
                     log(f"{self.aliveplayers[int(i_id)].name} playing for mares")
             else:
-                await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
-                warning(f"FAIL: Insufficent rights - {ctx.author.name}")
+                await fail(ctx,
+                           "Вы должны быть ведущим для исполнения данной команды!",
+                           f"Insufficient rights - {ctx.author.name}")
         elif self.LEVEL == "PRESTART":
-            await ctx.send("Нет запущенных игр! Используйте `/stmafia`!")
-            warning("FAIL: game wasn't started!")
+            await fail(ctx,
+                       "Нет запущенных игр! Используйте `/stmafia`!",
+                       "game wasn't started!")
         else:
-            await ctx.send("Нет созданных игр! Используйте `/prestmafia`!")
-            warning("FAIL: game wasn't created!")
+            await fail(ctx,
+                       "Нет созданных игр! Используйте `/prestmafia`!",
+                       "game wasn't created!")
 
     @commands.command(
         name="endmafia",
@@ -716,11 +747,13 @@ class Mafia(commands.Cog):
                 await ctx.send("Игра остановлена")
                 log("game ended successfully")
             else:
-                await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
-                warning(f"FAIL: Insufficent rights - {ctx.author.name}")
+                await fail(ctx,
+                           "Вы должны быть ведущим для исполнения данной команды!",
+                           f"Insufficient rights - {ctx.author.name}")
         else:
-            await ctx.send("Нет созданных игр! Используйте `/prestmafia`!")
-            warning("FAIL: game wasn't created!")
+            await fail(ctx,
+                       "Нет созданных игр! Используйте `/prestmafia`!",
+                       "game wasn't created!")
 
     @commands.command(
         name="status",
@@ -730,8 +763,9 @@ class Mafia(commands.Cog):
     async def status(self, ctx):
         log(f"{ctx.author.name} used /status")
         if self.LEVEL == "NOTHING":
-            await ctx.send("Нет созданных игр")
-            warning("FAIL: no existed games!")
+            await fail(ctx,
+                       "Нет созданных игр",
+                       "no existed games!")
             return 0
         log(f"{ctx.author} used /status")
         if self.gmrole.role in ctx.author.roles:
@@ -778,8 +812,9 @@ class Mafia(commands.Cog):
                 player = self.mafiaplayers[playeri]
                 await ctx.send(f"{player.name}")
         else:
-            await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
-            warning(f"FAIL: Insufficent rights - {ctx.author.name}")
+            await fail(ctx,
+                       "Вы должны быть ведущим для исполнения данной команды!",
+                       f"Insufficient rights - {ctx.author.name}")
 
     @commands.command(
         name="check",
@@ -795,8 +830,9 @@ class Mafia(commands.Cog):
             await ctx.send(f"days = {self.regplayers[int(p_id)].days}")
             await ctx.send(f"alive = {self.regplayers[int(p_id)].alive}")
         else:
-            await ctx.send("Вы должны быть ведущим для исполнения данной команды!")
-            warning(f"FAIL: Insufficent rights - {ctx.author.name}")
+            await fail(ctx,
+                       "Вы должны быть ведущим для исполнения данной команды!",
+                       f"Insufficient rights - {ctx.author.name}")
 
 
 def setup(bot):
