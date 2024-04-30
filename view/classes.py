@@ -11,7 +11,7 @@ def connected():
 
 class Button(disnake.ui.View):
     def __init__(self):
-        super().__init__(timeout=10.0)
+        super().__init__(timeout=3600)
         self.value = Optional[bool]
 
     @disnake.ui.button(label="Green Button", style=disnake.ButtonStyle.green, emoji="🤫")
@@ -20,35 +20,13 @@ class Button(disnake.ui.View):
         self.value = True
         self.stop()
 
-    @disnake.ui.button(label="Red Button", style=disnake.ButtonStyle.red, emoji="🤫")
-    async def red_button(self, inter: disnake.CommandInteraction):
-        await inter.send("Кнопка нажата!")
-        self.value = False
-        self.stop()
 
-
-class Dropdown(disnake.ui.StringSelect):
-
-    def __init__(self):
-        options = [
-            disnake.SelectOption(label="Burger", description="Очень сочный!", emoji="🍔"),
-            disnake.SelectOption(label="Sushi", description="Тают во рту!", emoji="🍣"),
-            disnake.SelectOption(label="Pizza", description="Тянущийся сыр!", emoji="🍕")
-        ]
-
-        super().__init__(
-            placeholder="MENU",
-            min_values=1,
-            max_values=2,
-            options=options
-        )
-
-    async def callback(self, inter: disnake.MessageInteraction):
-        await inter.response.send_message(f"Вы заказали {self.values[0]}. Ожидайте доставки!")
-
-
-class DropdownView(disnake.ui.View):
-
-    def __init__(self):
+class DropdownMenu(disnake.ui.View):
+    def __init__(self, options):
         super().__init__()
-        self.add_item(Dropdown())
+        self.options = options
+
+    @disnake.ui.select(placeholder='Выберите элемент', options=[])
+    async def dropdown_callback(self, select, interaction):
+        selected_option = next(opt for opt in select.options if opt.value == select.values[0])
+        return selected_option.label

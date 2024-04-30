@@ -1,6 +1,10 @@
 import disnake
 import random
 import math
+
+from disnake.ui import select
+
+from view.classes import DropdownMenu
 from disnake.ext import commands
 from view.console_out import log, important, warning
 
@@ -55,6 +59,28 @@ async def fail(ctx, user_msg, log_msg):
     warning(f"{log_msg}")
 
 
+async def show_dropdown_menu(ctx, options):
+    view = DropdownMenu(options)
+
+    select_options = [disnake.SelectOption(label=str(opt), value=str(opt)) for opt in options]
+    view.children[0].options = select_options
+
+    message = await ctx.send('Выберите элемент:', view=view)
+
+    try:
+        interaction = await ctx.bot.wait("select_option",
+                                         check=lambda i: i.component.id == select.id and i.message.id == message.id,
+                                         timeout=60)
+
+        selected_values = interaction.data["values"]
+        selected_option = next(opt.label for opt in view.children[0].options if opt.value == selected_values[0])
+
+        await interaction.edit_origin(content=f"Выбран элемент: {selected_option}")
+
+    except TimeoutError:
+        await message.edit(content="Превышено время ожидания выбора элемента")
+
+
 class Mafia(commands.Cog):
 
     def __init__(self, bot):
@@ -82,7 +108,7 @@ class Mafia(commands.Cog):
         self.PHASE = "DAY"  # DAY/NIGHT
         self.ROLES = {
             0: "MARE",
-            1: "DOG",
+            1: "CHANGE",
             2: "SHERIFF",
             3: "NURSE",
             4: "MANIAC",
@@ -148,17 +174,34 @@ class Mafia(commands.Cog):
 
     async def send_gen_messages(self, ctx):
         await ctx.send("Рассылаем сообщения...")
-        await self.generalchannel.channel.send(
-            f"{self.mafiarole.role.mention}, добро пожаловать в игру. Сейчас идёт **фаза регистрации**. Во время этой фазы ведущий набирает игроков. **Ждите начала игры!** Если вы передумали участвовать в игре - напишите `/leave`")
-        await self.generalchannel.channel.send(
-            "Канал **general** предназначен для общения игроков во время дневной фазы. Этот канал видят также и наблюдатели. Мертвые игроки писать в него не могут!")
-        await self.generalchannel.channel.send(
-            "Канал **spectating** канал предназначеный для мертвых игроков и наблюдателей. В этом чате вы можете спокойно раскрывать свою роль и обсуждать игровые моменты")
-        await self.spectatorchannel.channel.send(
-            f"{self.spectatorrole.role.mention} Этот канал предназначен для общения мертвых игроков и наблюдателей. **Старайтесь не мешать игре!**")
-        await self.commandschannel.channel.send(
-            f"{self.gmrole.role.mention} Команды и заметки, которые вам могут пригодиться во время игры пишите сюда.")
-        # await ctx.guild.categories[1].channels[4].send(f"Поздравляю, вам всем выпала роль мафии. В этом чате вы будете переговариваться и договариваться о том, кого убить")
+        embed_gen = disnake.Embed(
+            title="Регистрация",
+            description=f"{self.mafiarole.role.mention}, добро пожаловать в игру. Сейчас идёт **фаза регистрации**. Во время этой фазы ведущий набирает игроков. **Ждите начала игры!** Если вы передумали участвовать в игре - напишите `/leave`",
+            color=0x4682B4
+        )
+        embed_gen.add_field(
+            name="General",
+            value="Канал **general** предназначен для общения игроков во время дневной фазы. Этот канал видят также и наблюдатели. Мертвые игроки писать в него не могут!",
+            inline=False
+        )
+        embed_gen.add_field(
+            name="Spectating",
+            value="Канал **spectating** канал предназначеный для мертвых игроков и наблюдателей. В этом чате вы можете спокойно раскрывать свою роль и обсуждать игровые моменты",
+            inline=False
+        )
+        embed_spec = disnake.Embed(
+            title="Spectators",
+            description=f"{self.spectatorrole.role.mention} Этот канал предназначен для общения мертвых игроков и наблюдателей. **Старайтесь не мешать игре!**",
+            color=0x4682B4
+        )
+        embed_com = disnake.Embed(
+            title="Commands",
+            description=f"{self.gmrole.role.mention} Команды и заметки, которые вам могут пригодиться во время игры пишите сюда.",
+            color=0x4682B4
+        )
+        await self.generalchannel.channel.send(embed=embed_gen)
+        await self.spectatorchannel.channel.send(embed=embed_spec)
+        await self.commandschannel.channel.send(embed=embed_com)
 
     async def create_roles(self, ctx):
         await ctx.send("Создаём роли...")
@@ -197,7 +240,13 @@ class Mafia(commands.Cog):
         log(f"Assigned gamerole NONE to {ctx.author}")
         await ctx.author.add_roles(self.spectatorrole.role)
         log(f"role {self.spectatorrole.name} added to {ctx.author.name}")
-        await self.generalchannel.channel.send(f"**{ctx.author.name} зашел в наблюдатели**")
+        embed = disnake.Embed(
+            title="Новый наблюдатель",
+            description=f"**{ctx.author.name}** зашел в наблюдатели!",
+            color=0x33ff3f
+        )
+        embed.set_thumbnail(url=f"{self.regplayers[ctx.author.id].member.avatar.url}")
+        await self.generalchannel.channel.send(embed=embed)
         await ctx.send("Вы наблюдаете за игрой!")
 
     async def leave_success(self, ctx):
@@ -205,10 +254,13 @@ class Mafia(commands.Cog):
         log(f"removed role {self.mafiarole.role.name} from {ctx.author.name}")
         await ctx.author.remove_roles(self.spectatorrole.role)
         log(f"removed role {self.spectatorrole.role.name} from {ctx.author.name}")
-        await self.generalchannel.channel.send(f"**{ctx.author.name} покинул игру**")
-        # if self.regplayers[inter.author.id].role == "SPECTATOR":
-        #     await inter.author.remove_roles(self.spectatorrole.role)
-        #     log(f"removed role {self.spectatorrole.role.name} from {inter.author.name}")
+        embed = disnake.Embed(
+            title="Игрок вышел",
+            description=f"**{ctx.author.name}** покинул игру!",
+            color=0xff3333
+        )
+        embed.set_thumbnail(url=f"{self.regplayers[ctx.author.id].member.avatar.url}")
+        await self.generalchannel.channel.send(embed=embed)
         self.regplayers.pop(ctx.author.id)
         log(f"removed {ctx.author.name} from regplayers")
         await ctx.send("Вы покинули игру Мафия")
@@ -216,7 +268,13 @@ class Mafia(commands.Cog):
     async def join_success(self, ctx):
         self.regplayers[ctx.author.id] = Player(ctx.author)
         log(f"{ctx.author.name} added to regplayers")
-        await self.generalchannel.channel.send(f"**{ctx.author.name} зашел в игру**")
+        embed = disnake.Embed(
+            title="Присоединился к игре",
+            description=f"**{ctx.author.name}** зашел в игру!",
+            color=0x33ff3f
+        )
+        embed.set_thumbnail(url=f"{self.regplayers[ctx.author.id].member.avatar.url}")
+        await self.generalchannel.channel.send(embed=embed)
         await ctx.author.add_roles(self.spectatorrole.role)
         log(f"role {self.spectatorrole.name} added to {ctx.author.name}")
         await ctx.author.add_roles(self.mafiarole.role)
@@ -333,23 +391,81 @@ class Mafia(commands.Cog):
             log(f"{player.name} == {self.personalchannels[player.id].name}?")
             # if str(self.aliveplayers[i].name) == str(ctx.guild.categories[1].channels[3+i].name):
             if player.role == self.ROLES[0]:
-                await self.personalchannels[player.id].channel.send(
-                    f"{player.member.mention}, твоя роль - **Мирная кобылка**")
+                embed = disnake.Embed(
+                    title="Мирная кобылка",
+                    description=f"{player.member.mention}, твоя роль - **Мирная кобылка**",
+                    color=0x8aff33
+                )
+                embed.add_field(
+                    name="Игра за мирную кобылку",
+                    value="Ваша цель: найти чейнджлингов, что мешают вам спокойно жить. Несмотря на ваши ограниченые возможности,"
+                          " используйте вашу хитрость, логику и смекалку. Будет полезно найти себе друзей, но постарайтесь не нажить себе врагов",
+                    inline=False)
+                await self.personalchannels[player.id].channel.send(embed=embed)
             if player.role == self.ROLES[1]:
-                await self.personalchannels[player.id].channel.send(
-                    f"{player.member.mention}, твоя роль - **Алмазный пёс**")
+                embed = disnake.Embed(
+                    title="Чейнджлинг",
+                    description=f"{player.member.mention}, твоя роль - **Чейнджлинг**",
+                    color=0xff4633
+                )
+                embed.add_field(
+                    name="Игра за чейнджлингов",
+                    value="Ваша цель: истребить весь город. Вам предстоит грамотно затесаться в ряды кобылок, чтобы избавиться от всех его жителей. "
+                          "Благодаря вашей связи с гнездом, вы можете отличить других чейнджлингов от обычных поняшек. Действуйте в команде со своим ульем!",
+                    inline=False)
+                await self.personalchannels[player.id].channel.send(embed=embed)
                 self.mafiaplayers[player.id] = self.aliveplayers[player.id]
                 log(f"{self.mafiaplayers[player.id].name} was mafia! Added record to mafiaplayers dict")
             if player.role == self.ROLES[3]:
-                await self.personalchannels[player.id].channel.send(
-                    f"{player.member.mention}, твоя роль - **Медсестра**")
+                embed = disnake.Embed(
+                    title="Медсестра",
+                    description=f"{player.member.mention}, твоя роль - **Медсестра**",
+                    color=0x8aff33
+                )
+                embed.add_field(
+                    name="Игра за медсестру",
+                    value="Ваша цель: содействовать городу используя ваши медицинские навыки. Вы играете за сторону мирных кобылок и в ваших интересах споймать всех чейнджлингов. "
+                          "Вы не можете лечить одного игрока 2 ночи подряд!",
+                    inline=False)
+                await self.personalchannels[player.id].channel.send(embed=embed)
             if player.role == self.ROLES[2]:
-                await self.personalchannels[player.id].channel.send(f"{player.member.mention}, твоя роль - **Шериф**")
+                embed = disnake.Embed(
+                    title="Шериф",
+                    description=f"{player.member.mention}, твоя роль - **Шериф**",
+                    color=0x8aff33
+                )
+                embed.add_field(
+                    name="Игра за шерифа",
+                    value="Ваша цель: содействовать городу используя ваши детективные способности. Вы играете за сторону мирных кобылок и в ваших интересах споймать всех чейнджлингов. "
+                          "Проверяйте по жителю каждую ночь и узнавайте кто из них перевертыш. Однако вам еще предстоит убедить жителей, что вы настоящий шериф...",
+                    inline=False)
+                await self.personalchannels[player.id].channel.send(embed=embed)
             if player.role == self.ROLES[4]:
-                await self.personalchannels[player.id].channel.send(f"{player.member.mention}, твоя роль - **Маньяк**")
+                embed = disnake.Embed(
+                    title="Маньяк",
+                    description=f"{player.member.mention}, твоя роль - **Маньяк**",
+                    color=0xff4633
+                )
+                embed.add_field(
+                    name="Игра за маньяка",
+                    value="Ваша цель: истребить всех. Вас никогда не волновали проблемы и празднества города. Вы мечтали избавиться от всех этих "
+                          "дружбомагичных существ, и ваш час настал. Будет неплохо избавиться от ненавистников, пока город занят чейнджлингами. Однако "
+                          "вам предстоит истребить абсолютно всех, без исключений...",
+                    inline=False)
+                await self.personalchannels[player.id].channel.send(embed=embed)
             if player.role == self.ROLES[5]:
-                await self.personalchannels[player.id].channel.send(
-                    f"{player.member.mention}, твоя роль - **Помощник шерифа**")
+                embed = disnake.Embed(
+                    title="Помощник Шерифа",
+                    description=f"{player.member.mention}, твоя роль - **Помощник Шерифа**",
+                    color=0x8aff33
+                )
+                embed.add_field(
+                    name="Игра за помощника",
+                    value="Ваша цель: помогать шерифу в расследовании. Большой город в одиночку контролировать бывает сложно. Как хорошо, что существуете вы, "
+                          "помощник шерифа! Совершайте проверки вместе с шерифом и ускорьте расследование в 2 раза. Однако ваш начальник может быть убит, "
+                          "и вам придется быть готовым к этом и занять его место...",
+                    inline=False)
+                await self.personalchannels[player.id].channel.send(embed=embed)
 
     async def create_mafia_channel(self):
         await self.guild.create_text_channel("mafia channel", category=self.category.channel, overwrites={
@@ -370,10 +486,20 @@ class Mafia(commands.Cog):
 
     async def inspect_success(self, ctx, i_id):
         if self.aliveplayers[int(i_id)].role == self.ROLES[1] or self.aliveplayers[int(i_id)].role == self.ROLES[4]:
-            await ctx.send(f"{self.aliveplayers[int(i_id)].name} играет за сторону псов!")
-            log(f"{self.aliveplayers[int(i_id)].name} playing for dogs")
+            embed = disnake.Embed(
+                title="Успех",
+                description=f"{self.aliveplayers[int(i_id)].name} играет за сторону чейнджлингов!",
+                color=0xff4633
+            )
+            await ctx.send(embed=embed)
+            log(f"{self.aliveplayers[int(i_id)].name} playing for changelings")
         else:
-            await ctx.send(f"{self.aliveplayers[int(i_id)].name} играет за сторону кобылок!")
+            embed = disnake.Embed(
+                title="Мимо",
+                description=f"{self.aliveplayers[int(i_id)].name} играет за сторону кобылок!",
+                color=0x8aff33
+            )
+            await ctx.send(embed=embed)
             log(f"{self.aliveplayers[int(i_id)].name} playing for mares")
 
     async def heal_success(self, ctx, h_id):
@@ -384,11 +510,16 @@ class Mafia(commands.Cog):
         else:
             self.aliveplayers[int(h_id)].alive = True
             self.HEALID = int(h_id)
+            await ctx.send("Успешно излечен!")
 
     async def execute_success(self, e_id):
         self.aliveplayers[e_id].alive = False
-        await self.generalchannel.channel.send(
-            f"Игрок {self.aliveplayers[e_id].mention} был казнён! Игрок прожил с нами {self.aliveplayers[e_id].days} дней!")
+        embed = disnake.Embed(
+            title="Игрок казнён!",
+            description=f"Игрок {self.aliveplayers[e_id].mention} был казнён! Игрок прожил с нами {self.aliveplayers[e_id].days} дней!",
+            color=0xff4633
+        )
+        await self.generalchannel.channel.send(embed=embed)
         # TODO: Добавить объявление роли при казни?
         log(f"{self.aliveplayers[e_id].name} was executed!")
         await self.aliveplayers[e_id].member.add_roles(self.spectatorrole.role)
@@ -403,46 +534,92 @@ class Mafia(commands.Cog):
         self.aliveplayers.pop(e_id)
         log(f"player {self.aliveplayers[e_id].name} was pop-ed from aliveplayers dict")
 
-    async def kill_success(self, ctx, k_id):
-        self.aliveplayers[k_id].alive = False
-        log(f"Attempting to kill {self.aliveplayers[k_id].name}!")
-        self.aliveplayers[int(k_id)].alive = False
-        log(f"Attempting to kill {self.aliveplayers[int(k_id)].name}!")
-        await ctx.send(f"Пытаемся убить {self.aliveplayers[int(k_id)].name}...")
+    async def kill_success(self, ctx):
+        options = []
+        for player in self.aliveplayers.values():
+            options.append(player.name)
+        selected_option = await show_dropdown_menu(ctx, options)
+        await ctx.send(f"{selected_option}")
+        #self.aliveplayers[player].alive = False
+        #log(f"Attempting to kill {self.aliveplayers[player].name}!")
 
     async def game_ended(self, ctx):
         log(f"Game ended!")
-        if len(self.mafiaplayers) == 0:
-            await self.generalchannel.channel.send(
-                f"{self.mafiarole.role.mention}, наши поздравления! **Победа мирных кобылок за {self.DAY} дней!!**")
-        else:
-            await self.generalchannel.channel.send(
-                f"{self.mafiarole.role.mention}, у вас не получилось спастись от геноцида алмазных псов... **Победа алмазных псов за {self.DAY} дней!!**")
+        embed_peace = disnake.Embed(
+            title="Конец Игры!",
+            description=f"{self.mafiarole.role.mention}, наши поздравления! Вы отлично справились с напастью мерзких жуков!",
+            color=0x8aff33
+        )
+        embed_mafia = disnake.Embed(
+            title="Конец Игры!",
+            description=f"{self.mafiarole.role.mention}, у вас не получилось спастись от геноцида чейнджлингов... "
+                        f"Рой благодарит вас за новые территории",
+            color=0xff4633
+        )
+        embed_mafia.add_field(
+            name="Дней прожито",
+            value=f"{self.DAY}",
+            inline=False)
+        embed_peace.add_field(
+            name="Дней прожито",
+            value=f"{self.DAY}",
+            inline=False)
 
         await ctx.send(f"Игра окончена!")
-        await self.generalchannel.channel.send(f"**Остались в живых:**")
-
+        players = ""
+        days = ""
+        roles = ""
         for playeri in self.aliveplayers:
             player = self.aliveplayers[playeri]
+            players += f"{player.member.name}\n"
             player.days += 1
+            days += f"{player.days}\n"
             if player.role == self.ROLES[0]:
-                await self.generalchannel.channel.send(
-                    f"{player.member.mention} - **Мирная кобылка**")
+                roles += f"Мирная кобылка\n"
             if player.role == self.ROLES[1]:
-                await self.generalchannel.channel.send(
-                    f"{player.member.mention} - **Алмазный пёс**")
+                roles += f"Чейнджлинг\n"
             if player.role == self.ROLES[2]:
-                await self.generalchannel.channel.send(
-                    f"{player.member.mention} - **Шериф**")
+                roles += f"Шериф\n"
             if player.role == self.ROLES[3]:
-                await self.generalchannel.channel.send(
-                    f"{player.member.mention} - **Медсестра**")
+                roles += f"Медсестра\n"
             if player.role == self.ROLES[4]:
-                await self.generalchannel.channel.send(
-                    f"{player.member.mention} - **Маньяк**")
+                roles += f"Маньяк\n"
             if player.role == self.ROLES[5]:
-                await self.generalchannel.channel.send(
-                    f"{player.member.mention} - **Помощник шерифа**")
+                roles += f"Помощник шерифа\n"
+
+        embed_mafia.add_field(
+            name="Выжившие",
+            value="",
+            inline=False)
+        embed_mafia.add_field(
+            name="Имя",
+            value=f"{players}",
+            inline=True)
+        embed_peace.add_field(
+            name="Имя",
+            value=f"{players}",
+            inline=True)
+        embed_mafia.add_field(
+            name="Дней",
+            value=f"{days}",
+            inline=True)
+        embed_peace.add_field(
+            name="Дней",
+            value=f"{days}",
+            inline=True)
+        embed_mafia.add_field(
+            name="Роль",
+            value=f"{roles}",
+            inline=True)
+        embed_peace.add_field(
+            name="Роль",
+            value=f"{roles}",
+            inline=True)
+
+        if len(self.mafiaplayers) == 0:
+            await self.generalchannel.channel.send(embed=embed_peace)
+        else:
+            await self.generalchannel.channel.send(embed=embed_mafia)
 
         # Открытие каналов на конец игры
         await self.generalchannel.channel.set_permissions(self.mafiarole.role, view_channel=True,
@@ -471,7 +648,12 @@ class Mafia(commands.Cog):
         if self.PHASE == "DAY":
             self.PHASE = "NIGHT"
             log(f"PHASE := {self.PHASE}")
-            await ctx.guild.categories[1].channels[0].send("**Наступает ночь...**")
+            embedgen = disnake.Embed(
+                title="Наступает ночь...",
+                description=f"На небосвод восходит луна. Пора возвращаться домой...",
+                color=0x4682B4
+            )
+            await self.generalchannel.channel.send(embed=embedgen)
             await self.generalchannel.channel.set_permissions(self.mafiarole.role,
                                                               send_messages=False,
                                                               view_channel=True,
@@ -487,15 +669,28 @@ class Mafia(commands.Cog):
             self.DAY += 1
             log(f"DAY++")
             log(f"PHASE := {self.PHASE}")
-            await ctx.guild.categories[1].channels[0].send("**Всходит солнце...**")
-            await ctx.guild.categories[1].channels[0].send(f"**Наступает __{self.DAY}__ день**")
-            await ctx.guild.categories[1].channels[0].send("На утро не проснулся(ись):")
+            embedgen = disnake.Embed(
+                title="Всходит солнце...",
+                description=f"На улицах наконец посветлело, значит можно снизить бдительность...",
+                color=0x4682B4
+            )
+            embedgen.add_field(
+                name="Дней прожито",
+                value=f"{self.DAY}",
+                inline=False
+            )
+
+            players = ""
             for player in list(self.aliveplayers.values()):
                 if not player.alive:
                     log(f"{player.name} was killed!")
-                    await self.generalchannel.channel.send(
-                        f"{player.member.mention} - был убит и прожил с нами {player.days} дней!")
                     await player.member.add_roles(self.spectatorrole.role)
+                    players += f"{player.name}\n"
+                    embed = disnake.Embed(
+                        title="Убийство!",
+                        description=f"{player.name} был найден мертвым!",
+                        color=0xff4633
+                    )
                     log(f"Assigned {self.spectatorrole.name} role to {player.name}")
                     if player.role == self.ROLES[1]:
                         self.mafiaplayers.pop(player.id)
@@ -506,8 +701,14 @@ class Mafia(commands.Cog):
                     log(f"Assigned SPECTATOR gamerole to {player.name}")
                     self.aliveplayers.pop(player.id)
                     log(f"player {player.name} was pop-ed from aliveplayers dict")
+                    await self.generalchannel.channel.send(embed=embed)
                 else:
                     player.days += 1
+            embedgen.add_field(
+                name="Найдены мертвыми",
+                value=f"{players}",
+                inline=False)
+            await self.generalchannel.channel.send(embed=embedgen)
             await self.generalchannel.channel.set_permissions(self.mafiarole.role,
                                                               send_messages=True,
                                                               view_channel=True,
@@ -626,7 +827,7 @@ class Mafia(commands.Cog):
         # Проверка на PRESTMAFIA
         if self.LEVEL == "PRESTART":
             # Проверка на количество игроков    (setting)   default=4
-            if len(self.prestplayers) < 4:
+            if len(self.prestplayers) < 0:
                 await fail(ctx,
                            f"Не можем начать, слишком мало игроков: {len(self.prestplayers)}",
                            f"Unable to start: Small players count! - {len(self.prestplayers)}")
@@ -701,16 +902,17 @@ class Mafia(commands.Cog):
                        "Игра еще не создана! Используйте `/prestmafia`",
                        "Game wasn't created")
 
+    # вот тут продолжить
     @commands.command(
         name="kill",
         usage="/kill {id}",
         description="Убить игрока по id"
     )
-    async def kill(self, ctx, k_id):
+    async def kill(self, ctx):
         log(f"{ctx.author.name} used /kill")
         if self.LEVEL == "START":
             if self.gmrole.role in ctx.author.roles:
-                await self.kill_success(ctx, k_id)
+                await self.kill_success(ctx)
             else:
                 await fail(ctx,
                            "Вы должны быть ведущим для исполнения данной команды!",
@@ -910,3 +1112,5 @@ class Mafia(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Mafia(bot))
+
+# TODO: доделать embed для status и check

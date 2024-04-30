@@ -1,7 +1,7 @@
 import disnake
 from disnake.ext import commands
 from view.console_out import log, important, warning, error
-from view.classes import Button, DropdownView
+from view.classes import Button
 
 
 class Testing(commands.Cog):
